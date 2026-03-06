@@ -42,8 +42,8 @@ const Settings: React.FC = () => {
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === item.id
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                  : 'text-slate-500 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'text-slate-500 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-200'
                 }`}
             >
               <item.icon className="w-4 h-4" />
@@ -72,11 +72,29 @@ const Settings: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Preço Base: Etanol (R$)</label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    defaultValue="3.999"
+                    className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Preço Base: Diesel S10 (R$)</label>
                   <input
                     type="number"
                     step="0.001"
                     defaultValue="6.120"
+                    className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Preço Base: Diesel Comum (R$)</label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    defaultValue="5.990"
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
                 </div>

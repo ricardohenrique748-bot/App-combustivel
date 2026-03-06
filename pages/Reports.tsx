@@ -99,7 +99,9 @@ const Reports: React.FC = () => {
             >
               <option value="ALL">Todos os Tipos</option>
               <option value="GASOLINA">Gasolina</option>
+              <option value="ETANOL">Etanol</option>
               <option value="DIESEL S10">Diesel S10</option>
+              <option value="DIESEL COMUM">Diesel Comum</option>
             </select>
           </div>
           <button
@@ -150,7 +152,7 @@ const Reports: React.FC = () => {
                   <td className="px-6 py-4 text-sm font-medium text-slate-700">{t.volume.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm font-bold text-slate-700">R$ {t.value.toFixed(2)}</td>
                   <td className={`px-6 py-4 text-sm font-black text-right ${t.efficiency && t.efficiency > 10 ? 'text-emerald-600' :
-                      t.efficiency && t.efficiency < 8 ? 'text-rose-600' : 'text-slate-700'
+                    t.efficiency && t.efficiency < 8 ? 'text-rose-600' : 'text-slate-700'
                     }`}>
                     {t.efficiency?.toFixed(1) || '--'}
                   </td>

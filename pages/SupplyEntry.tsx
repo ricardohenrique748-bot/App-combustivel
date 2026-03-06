@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { 
-  ArrowLeft, 
-  CarFront, 
-  Search, 
-  FileCheck, 
-  Save, 
+import {
+  ArrowLeft,
+  CarFront,
+  Search,
+  FileCheck,
+  Save,
   AlertTriangle,
   CheckCircle2,
   Info,
@@ -23,12 +23,12 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState(0);
   const [pricePerLiter, setPricePerLiter] = useState(5.899);
-  const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'ETANOL'>('GASOLINA');
+  const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL COMUM' | 'ETANOL'>('GASOLINA');
   const [success, setSuccess] = useState(false);
 
-  const selectedVehicle = useMemo(() => 
-    vehicles.find(v => v.plate === plate.toUpperCase()), 
-  [plate, vehicles]);
+  const selectedVehicle = useMemo(() =>
+    vehicles.find(v => v.plate === plate.toUpperCase()),
+    [plate, vehicles]);
 
   const totalCost = useMemo(() => quantity * pricePerLiter, [quantity, pricePerLiter]);
 
@@ -103,8 +103,8 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
               <div>
                 <label className="block text-sm font-bold mb-2">Placa do Veículo</label>
                 <div className="relative">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={plate}
                     onChange={(e) => setPlate(e.target.value.toUpperCase())}
                     className={`w-full bg-slate-50 border ${selectedVehicle ? 'border-emerald-500' : 'border-slate-200'} rounded-xl p-4 text-xl font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all`}
@@ -128,21 +128,29 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
               <div>
                 <label className="block text-sm font-bold mb-2">Tipo de Combustível</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button 
+                  <button
                     onClick={() => setFuelType('GASOLINA')}
-                    className={`py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'GASOLINA' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
+                    className={`py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'GASOLINA' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
                   >Gasolina</button>
-                  <button 
+                  <button
+                    onClick={() => setFuelType('ETANOL')}
+                    className={`py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'ETANOL' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
+                  >Etanol</button>
+                  <button
                     onClick={() => setFuelType('DIESEL S10')}
-                    className={`py-3 px-4 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'DIESEL S10' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
+                    className={`py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'DIESEL S10' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
                   >Diesel S10</button>
+                  <button
+                    onClick={() => setFuelType('DIESEL COMUM')}
+                    className={`py-3 px-2 rounded-xl border-2 font-bold text-sm transition-all ${fuelType === 'DIESEL COMUM' ? 'border-primary bg-primary/5 text-primary' : 'border-slate-200 text-slate-500'}`}
+                  >Diesel Comum</button>
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-bold mb-2">Quantidade (Litros)</label>
                 <div className="relative">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-12 font-bold text-primary text-lg focus:ring-2 focus:ring-primary/20 outline-none"
@@ -152,8 +160,8 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
               </div>
               <div>
                 <label className="block text-sm font-bold mb-2">Valor por Litro (R$)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={pricePerLiter}
                   onChange={(e) => setPricePerLiter(Number(e.target.value))}
                   step="0.001"
@@ -172,7 +180,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
                 <span className="text-sm block opacity-70 mb-1">Custo Total</span>
                 <span className="text-4xl font-black">R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               </div>
-              <button 
+              <button
                 onClick={handleConfirm}
                 disabled={!selectedVehicle || quantity <= 0}
                 className="w-full bg-white text-primary font-black py-4 rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-3 mt-4 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"

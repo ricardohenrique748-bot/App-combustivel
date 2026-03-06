@@ -23,7 +23,7 @@ export interface Transaction {
   time: string;
   plate: string;
   driver: string;
-  fuelType: 'GASOLINA' | 'DIESEL S10' | 'ETANOL';
+  fuelType: 'GASOLINA' | 'DIESEL S10' | 'DIESEL COMUM' | 'ETANOL';
   volume: number;
   value: number;
   status: 'VERIFIED' | 'PENDING';
