@@ -20,7 +20,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setTimeout(() => {
       setIsLoading(false);
 
-      if (email === 'ricardo.luz@eunaman.com.br' && password === '123456') {
+      if (
+        (email === 'ricardo.luz@eunaman.com.br' && password === '123456') ||
+        (email === 'admin@prefeitura.gov.br' && password === 'admin')
+      ) {
         onLogin();
       } else {
         setError('Credenciais inválidas. Verifique seu e-mail e senha.');
