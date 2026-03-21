@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
       <nav className="flex-1 px-4 mt-6 space-y-1 overflow-y-auto scrollbar-hide pb-20">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-3 mt-2">Gestão</p>
 
-        {menuItems.filter(item => item.section === 'MANAGEMENT' && user && item.roles.includes(user.role)).map((item) => (
+        {menuItems.filter(item => item.section === 'MANAGEMENT' && user && item.roles.includes(user.role?.toUpperCase() || '')).map((item) => (
           <button
             key={item.id}
             onClick={() => setCurrentPage(item.id)}
@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
         ))}
 
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mt-8 mb-3">Sistema</p>
-        {menuItems.filter(item => item.section === 'SYSTEM' && user && item.roles.includes(user.role)).map((item) => (
+        {menuItems.filter(item => item.section === 'SYSTEM' && user && item.roles.includes(user.role?.toUpperCase() || '')).map((item) => (
           <button
             key={item.id}
             onClick={() => setCurrentPage(item.id)}
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-bold text-slate-800 truncate">{user?.name || 'Usuário'}</p>
-            <p className="text-xs text-slate-500 truncate">{user?.role === 'GESTOR' ? 'Gestor' : user?.role === 'SECRETARIO' ? 'Secretário' : 'Fiscal'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.role?.toUpperCase() === 'GESTOR' ? 'Gestor' : user?.role?.toUpperCase() === 'SECRETARIO' ? 'Secretário' : 'Fiscal'}</p>
           </div>
         </div>
 

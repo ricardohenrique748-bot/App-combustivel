@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
 
   React.useEffect(() => {
-    if (user && user.role === 'FISCAL' && currentPage !== 'SUPPLY_ENTRY') {
+    if (user && user.role?.toUpperCase() === 'FISCAL' && currentPage !== 'SUPPLY_ENTRY') {
       setCurrentPage('SUPPLY_ENTRY');
     }
   }, [user, currentPage]);
@@ -25,22 +25,22 @@ const App: React.FC = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'DASHBOARD':
-        if (user?.role === 'FISCAL') return null;
+        if (user?.role?.toUpperCase() === 'FISCAL') return null;
         return <Dashboard />;
       case 'SECRETARIATS':
-        if (user?.role === 'FISCAL') return null;
+        if (user?.role?.toUpperCase() === 'FISCAL') return null;
         return <Secretariats />;
       case 'VEHICLES':
-        if (user?.role === 'FISCAL') return null;
+        if (user?.role?.toUpperCase() === 'FISCAL') return null;
         return <Vehicles />;
       case 'SUPPLY_ENTRY':
-        if (user?.role === 'SECRETARIO') return null;
+        if (user?.role?.toUpperCase() === 'SECRETARIO') return null;
         return <SupplyEntry setCurrentPage={setCurrentPage} />;
       case 'REPORTS':
-        if (user?.role === 'FISCAL') return null;
+        if (user?.role?.toUpperCase() === 'FISCAL') return null;
         return <Reports />;
       case 'SETTINGS':
-        if (user?.role !== 'GESTOR') return null;
+        if (user?.role?.toUpperCase() !== 'GESTOR') return null;
         return <Settings />;
       default:
         return (

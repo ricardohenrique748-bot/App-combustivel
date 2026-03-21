@@ -19,7 +19,8 @@ import {
   Bell,
   Search,
   ShieldCheck,
-  LogIn
+  LogIn,
+  Filter
 } from 'lucide-react';
 import { CONSUMPTION_TRENDS } from '../constants';
 import { useFleet } from '../FleetContext';
@@ -30,6 +31,12 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Filtros do Gestor
+  const [filterSecretariat, setFilterSecretariat] = useState<string>('ALL');
+  const [filterPlate, setFilterPlate] = useState<string>('ALL');
+  const [filterYear, setFilterYear] = useState<string>('ALL');
+  const [filterMonth, setFilterMonth] = useState<string>('ALL');
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -43,12 +50,77 @@ const Dashboard: React.FC = () => {
 
   const alerts = secretariats.filter(s => s.status !== 'HEALTHY');
 
+  const uniqueMonths = useMemo(() => [
+    { value: '01', label: 'Janeiro', short: 'Jan' },
+    { value: '02', label: 'Fevereiro', short: 'Fev' },
+    { value: '03', label: 'Março', short: 'Mar' },
+    { value: '04', label: 'Abril', short: 'Abr' },
+    { value: '05', label: 'Maio', short: 'Mai' },
+    { value: '06', label: 'Junho', short: 'Jun' },
+    { value: '07', label: 'Julho', short: 'Jul' },
+    { value: '08', label: 'Agosto', short: 'Ago' },
+    { value: '09', label: 'Setembro', short: 'Set' },
+    { value: '10', label: 'Outubro', short: 'Out' },
+    { value: '11', label: 'Novembro', short: 'Nov' },
+    { value: '12', label: 'Dezembro', short: 'Dez' },
+  ], []);
+
+  const uniqueYears = useMemo(() => {
+    const years = new Set(transactions.map(t => {
+      if (!t.date) return null;
+      const match = t.date.match(/\b(20\d{2})\b/);
+      return match ? match[1] : null;
+    }).filter(Boolean) as string[]);
+    return Array.from(years).sort().reverse();
+  }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const vehicle = vehicles.find(v => v.plate === t.plate);
+      if (filterSecretariat !== 'ALL' && vehicle?.secretariat !== filterSecretariat) return false;
+      if (filterPlate !== 'ALL' && t.plate !== filterPlate) return false;
+      
+      if (filterYear !== 'ALL' && t.date) {
+        const yearMatch = t.date.match(/\b(20\d{2})\b/);
+        if (!yearMatch || yearMatch[1] !== filterYear) return false;
+      }
+      
+      if (filterMonth !== 'ALL' && t.date) {
+         const monthObj = uniqueMonths.find(m => m.value === filterMonth);
+         const isTextMonth = monthObj && t.date.toLowerCase().includes(monthObj.short.toLowerCase());
+         const isNumMonth = t.date.includes(`-${filterMonth}-`) || t.date.includes(`/${filterMonth}/`);
+         if (!isTextMonth && !isNumMonth) return false;
+      }
+      
+      return true;
+    });
+  }, [transactions, vehicles, filterSecretariat, filterPlate, filterYear, filterMonth, uniqueMonths]);
+
+  const filteredVehicles = useMemo(() => {
+    return vehicles.filter(v => {
+      if (filterSecretariat !== 'ALL' && v.secretariat !== filterSecretariat) return false;
+      if (filterPlate !== 'ALL' && v.plate !== filterPlate) return false;
+      return true;
+    });
+  }, [vehicles, filterSecretariat, filterPlate]);
+
   const kpis = useMemo(() => {
-    const totalContracted = secretariats.reduce((acc, s) => acc + s.contracted, 0);
-    const totalConsumed = secretariats.reduce((acc, s) => acc + s.consumed, 0);
+    const activeSecretariats = filterSecretariat === 'ALL' 
+      ? secretariats 
+      : secretariats.filter(s => s.name === filterSecretariat);
+
+    const totalContracted = activeSecretariats.reduce((acc, s) => acc + s.contracted, 0);
+    
+    // Se não há filtro de tempo/placa, mostramos o consumido direto da secretaria para ser mais rápido (e exato com inicial).
+    // Mas para abranger os filtros de ano/mês/placa, calculamos via transactions
+    const hasSpecificFilters = filterPlate !== 'ALL' || filterYear !== 'ALL' || filterMonth !== 'ALL';
+    const totalConsumed = hasSpecificFilters 
+      ? filteredTransactions.reduce((acc, t) => acc + t.volume, 0)
+      : activeSecretariats.reduce((acc, s) => acc + s.consumed, 0);
+      
     const totalRemaining = totalContracted - totalConsumed;
-    const monthlyConsumption = transactions
-      .filter(t => t.date.includes('Out')) // Simplified monthly filter
+    const monthlyConsumption = filterMonth !== 'ALL' ? totalConsumed : transactions
+      .filter(t => t.date && (t.date.includes('Out') || t.date.includes('-10-') || t.date.includes('/10/'))) // Default to Oct if no filter
       .reduce((acc, t) => acc + t.volume, 0);
 
     return {
@@ -56,9 +128,9 @@ const Dashboard: React.FC = () => {
       totalConsumed,
       totalRemaining,
       monthlyConsumption,
-      percentAvailable: totalContracted > 0 ? (totalRemaining / totalContracted) * 100 : 0
+      percentAvailable: totalContracted > 0 ? (Math.max(0, totalRemaining) / totalContracted) * 100 : 0
     };
-  }, [secretariats, transactions]);
+  }, [secretariats, transactions, filteredTransactions, filterSecretariat, filterPlate, filterYear, filterMonth]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -129,6 +201,77 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {user?.role !== 'SECRETARIO' && (
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-2">
+          <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-widest flex items-center gap-2">
+            <Filter className="w-5 h-5 text-primary" /> Filtros do Gestor
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Órgão (Secretaria)</label>
+              <select
+                value={filterSecretariat}
+                onChange={(e) => {
+                  setFilterSecretariat(e.target.value);
+                  setFilterPlate('ALL');
+                }}
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white font-medium"
+              >
+                <option value="ALL">Todos os Órgãos</option>
+                {secretariats.map(s => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Placa</label>
+              <select
+                value={filterPlate}
+                onChange={(e) => setFilterPlate(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white font-medium"
+              >
+                <option value="ALL">Todas as Placas</option>
+                {vehicles
+                  .filter(v => filterSecretariat === 'ALL' || v.secretariat === filterSecretariat)
+                  .map(v => (
+                    <option key={v.plate} value={v.plate}>{v.plate} - {v.model}</option>
+                  ))
+                }
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Ano</label>
+              <select
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white font-medium"
+              >
+                <option value="ALL">Todos os Anos</option>
+                {uniqueYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Mês</label>
+              <select
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none bg-white font-medium"
+              >
+                <option value="ALL">Todos os Meses</option>
+                {uniqueMonths.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
@@ -172,13 +315,13 @@ const Dashboard: React.FC = () => {
               <Truck className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-slate-900">{vehicles.filter(v => v.status === 'ACTIVE').length}</p>
+          <p className="text-3xl font-extrabold text-slate-900">{filteredVehicles.filter(v => v.status === 'ACTIVE').length}</p>
           <p className="text-sm text-slate-500 mt-1">Monitoramento em tempo real</p>
           <div className="mt-4 flex -space-x-2">
             {[1, 2, 3].map(i => (
               <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-slate-300"></div>
             ))}
-            <div className="w-7 h-7 rounded-full border-2 border-white bg-slate-800 flex items-center justify-center text-[8px] text-white font-bold">+{vehicles.length}</div>
+            <div className="w-7 h-7 rounded-full border-2 border-white bg-slate-800 flex items-center justify-center text-[8px] text-white font-bold">+{filteredVehicles.length}</div>
           </div>
         </div>
 
@@ -282,8 +425,8 @@ const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {secretariats.length > 0 ? (
-                secretariats.map((s) => (
+              {(filterSecretariat === 'ALL' ? secretariats : secretariats.filter(s => s.name === filterSecretariat)).length > 0 ? (
+                (filterSecretariat === 'ALL' ? secretariats : secretariats.filter(s => s.name === filterSecretariat)).map((s) => (
                   <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
