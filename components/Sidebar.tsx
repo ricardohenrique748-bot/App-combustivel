@@ -10,7 +10,8 @@ import {
   Settings,
   ChevronDown,
   LogOut,
-  PlusCircle
+  PlusCircle,
+  History
 } from 'lucide-react';
 import { Page } from '../types';
 import { useAuth } from '../AuthContext';
