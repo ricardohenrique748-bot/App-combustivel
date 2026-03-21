@@ -77,18 +77,23 @@ const Settings: React.FC = () => {
                     const email = prompt('E-mail do novo usuário:');
                     if (email) {
                       const name = prompt('Nome do novo usuário:');
-                      const roleInput = prompt('Cargo (ADMIN ou MANAGER):', 'MANAGER');
-                      if (name && (roleInput === 'ADMIN' || roleInput === 'MANAGER')) {
+                      const roleInput = prompt('Cargo (GESTOR, SECRETARIO ou FISCAL):', 'FISCAL');
+                      if (name && (roleInput === 'GESTOR' || roleInput === 'SECRETARIO' || roleInput === 'FISCAL')) {
+                        let secretariatId;
+                        if (roleInput === 'SECRETARIO') {
+                          secretariatId = prompt('ID da Secretaria (Ex: sec-obras, sec-saude):');
+                        }
                         addUser({
                           id: Date.now().toString(),
                           name,
                           email,
-                          role: roleInput as 'ADMIN' | 'MANAGER',
+                          role: roleInput as 'GESTOR' | 'SECRETARIO' | 'FISCAL',
                           status: 'ACTIVE',
-                          lastAccess: 'Ainda não acessou'
+                          lastAccess: 'Ainda não acessou',
+                          ...(secretariatId ? { secretariatId } : {})
                         });
                       } else {
-                        alert('Dados inválidos. Cargo deve ser ADMIN ou MANAGER.');
+                        alert('Dados inválidos. Cargo deve ser GESTOR, SECRETARIO ou FISCAL.');
                       }
                     }
                   }}
@@ -125,8 +130,8 @@ const Settings: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${user.role === 'ADMIN'
-                            ? 'bg-primary/10 text-primary'
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${user.role === 'GESTOR'
+                            ? 'bg-primary/10 text-primary' : user.role === 'SECRETARIO' ? 'bg-amber-100 text-amber-600'
                             : 'bg-slate-100 text-slate-500'
                             }`}>
                             {user.role}

@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import { Secretariat, Vehicle, Transaction } from './types';
 import { supabase } from './supabase';
+import { useAuth } from './AuthContext';
 
 interface FleetContextType {
   secretariats: Secretariat[];
@@ -10,6 +11,9 @@ interface FleetContextType {
   addSecretariat: (secretariat: { name: string; shortName: string; contracted: number; consumed?: number }) => Promise<void>;
   updateSecretariat: (id: string, updates: Partial<Secretariat>) => Promise<void>;
   deleteSecretariat: (id: string) => Promise<void>;
+  addVehicle: (vehicle: Vehicle) => Promise<void>;
+  updateVehicle: (plate: string, updates: Partial<Vehicle>) => Promise<void>;
+  deleteVehicle: (plate: string) => Promise<void>;
 }
 
 const FleetContext = createContext<FleetContextType | undefined>(undefined);
@@ -18,6 +22,7 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [secretariats, setSecretariats] = useState<Secretariat[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { user } = useAuth();
 
   const loadData = async () => {
     try {
@@ -147,15 +152,72 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const addVehicle = async (vehicle: Vehicle) => {
+    const { error } = await supabase.from('vehicles').insert([vehicle]);
+    if (!error) {
+      setVehicles(prev => [...prev, vehicle]);
+    } else {
+      console.error("Erro ao adicionar veículo:", error);
+    }
+  };
+
+  const updateVehicle = async (plate: string, updates: Partial<Vehicle>) => {
+    const { error } = await supabase.from('vehicles').update(updates).eq('plate', plate);
+    if (!error) {
+      setVehicles(prev => prev.map(v => v.plate === plate ? { ...v, ...updates } : v));
+    } else {
+      console.error("Erro ao atualizar veículo:", error);
+    }
+  };
+
+  const deleteVehicle = async (plate: string) => {
+    const { error } = await supabase.from('vehicles').delete().eq('plate', plate);
+    if (!error) {
+      setVehicles(prev => prev.filter(v => v.plate !== plate));
+    } else {
+      console.error("Erro ao excluir veículo:", error);
+    }
+  };
+
+  const filteredSecretariats = useMemo(() => {
+    if (user?.role === 'SECRETARIO' && user?.secretariatId) {
+      return secretariats.filter(s => 
+        s.id === user.secretariatId || 
+        s.shortName === user.secretariatId || 
+        s.name === user.secretariatId
+      );
+    }
+    return secretariats;
+  }, [secretariats, user]);
+
+  const filteredVehicles = useMemo(() => {
+    if (user?.role === 'SECRETARIO') {
+      const allowedSecs = filteredSecretariats.map(s => s.name);
+      return vehicles.filter(v => allowedSecs.includes(v.secretariat));
+    }
+    return vehicles;
+  }, [vehicles, filteredSecretariats, user]);
+
+  const filteredTransactions = useMemo(() => {
+    if (user?.role === 'SECRETARIO') {
+      const allowedPlates = filteredVehicles.map(v => v.plate);
+      return transactions.filter(t => allowedPlates.includes(t.plate));
+    }
+    return transactions;
+  }, [transactions, filteredVehicles, user]);
+
   return (
     <FleetContext.Provider value={{
-      secretariats,
-      vehicles,
-      transactions,
+      secretariats: filteredSecretariats,
+      vehicles: filteredVehicles,
+      transactions: filteredTransactions,
       addTransaction,
       addSecretariat,
       updateSecretariat,
-      deleteSecretariat
+      deleteSecretariat,
+      addVehicle,
+      updateVehicle,
+      deleteVehicle
     }}>
       {children}
     </FleetContext.Provider>

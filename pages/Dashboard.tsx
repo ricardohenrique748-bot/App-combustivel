@@ -23,9 +23,11 @@ import {
 } from 'lucide-react';
 import { CONSUMPTION_TRENDS } from '../constants';
 import { useFleet } from '../FleetContext';
+import { useAuth } from '../AuthContext';
 
 const Dashboard: React.FC = () => {
   const { secretariats, transactions, vehicles } = useFleet();
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +64,9 @@ const Dashboard: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin Global Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {user?.role === 'SECRETARIO' ? `Dashboard: ${secretariats[0]?.name || 'Secretaria'}` : 'Admin Global Dashboard'}
+          </h1>
           <p className="text-sm text-slate-500">Visão geral da frota, consumo e alocações de combustível.</p>
         </div>
         <div className="flex items-center gap-3">

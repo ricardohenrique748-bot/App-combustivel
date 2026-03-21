@@ -34,9 +34,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'MANAGER' | 'VIEWER';
+  role: 'GESTOR' | 'SECRETARIO' | 'FISCAL';
   status: 'ACTIVE' | 'INACTIVE';
   lastAccess?: string;
+  secretariatId?: string;
 }
 
 export type Page = 'DASHBOARD' | 'SECRETARIATS' | 'VEHICLES' | 'SUPPLY_ENTRY' | 'REPORTS' | 'SETTINGS';

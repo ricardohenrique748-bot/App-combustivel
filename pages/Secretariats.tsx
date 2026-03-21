@@ -12,9 +12,11 @@ import {
 } from 'lucide-react';
 import { useFleet } from '../FleetContext';
 import { Secretariat } from '../types';
+import { useAuth } from '../AuthContext';
 
 const Secretariats: React.FC = () => {
   const { secretariats, addSecretariat, updateSecretariat, deleteSecretariat } = useFleet();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSec, setEditingSec] = useState<Secretariat | null>(null);
 
@@ -67,13 +69,15 @@ const Secretariats: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-slate-900">Gestão de Secretarias</h1>
           <p className="text-sm text-slate-500">Controle de cotas e centros de custo governamentais.</p>
         </div>
-        <button
-          onClick={handleOpenAdd}
-          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition-all shadow-lg shadow-primary/20"
-        >
-          <Plus size={18} />
-          Nova Secretaria
-        </button>
+        {user?.role === 'GESTOR' && (
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition-all shadow-lg shadow-primary/20"
+          >
+            <Plus size={18} />
+            Nova Secretaria
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -89,12 +93,14 @@ const Secretariats: React.FC = () => {
                       }`}>
                       {s.shortName}
                     </div>
-                    <button
-                      onClick={() => handleOpenEdit(s)}
-                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors border border-transparent hover:border-primary/10 group/btn"
-                    >
-                      <Edit2 size={16} className="group-hover/btn:scale-110 transition-transform" />
-                    </button>
+                    {user?.role === 'GESTOR' && (
+                      <button
+                        onClick={() => handleOpenEdit(s)}
+                        className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors border border-transparent hover:border-primary/10 group/btn"
+                      >
+                        <Edit2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                      </button>
+                    )}
                   </div>
 
                   <h3 className="text-lg font-bold text-slate-800 mb-1">{s.name}</h3>
@@ -232,7 +238,7 @@ const Secretariats: React.FC = () => {
                     {editingSec ? 'Salvar' : 'Criar'}
                   </button>
                 </div>
-                {editingSec && (
+                {editingSec && user?.role === 'GESTOR' && (
                   <button
                     type="button"
                     onClick={handleDelete}

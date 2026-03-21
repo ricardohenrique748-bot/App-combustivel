@@ -16,7 +16,7 @@ const defaultUsers: User[] = [
     id: '1',
     name: 'Ricardo Henrique',
     email: 'ricardo.luz@eunaman.com.br',
-    role: 'ADMIN',
+    role: 'GESTOR',
     status: 'ACTIVE',
     lastAccess: 'Agora'
   },
@@ -24,17 +24,26 @@ const defaultUsers: User[] = [
     id: '2',
     name: 'Administrador Prefeitura',
     email: 'admin@prefeitura.gov.br',
-    role: 'ADMIN',
+    role: 'GESTOR',
     status: 'ACTIVE',
     lastAccess: 'Ontem, 14:30'
   },
   {
     id: '3',
-    name: 'Gestor de Transportes',
-    email: 'gestor@prefeitura.gov.br',
-    role: 'MANAGER',
+    name: 'Secretário de Transportes',
+    email: 'secretario@prefeitura.gov.br',
+    role: 'SECRETARIO',
     status: 'ACTIVE',
-    lastAccess: 'Há 2 dias'
+    lastAccess: 'Há 2 dias',
+    secretariatId: 'sec-transportes'
+  },
+  {
+    id: '4',
+    name: 'Fiscal de Combustível',
+    email: 'fiscal@prefeitura.gov.br',
+    role: 'FISCAL',
+    status: 'ACTIVE',
+    lastAccess: 'Há 1 dia'
   }
 ];
 

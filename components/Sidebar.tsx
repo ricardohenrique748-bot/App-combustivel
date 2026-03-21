@@ -24,12 +24,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout }) => {
   const { user } = useAuth();
   const menuItems = [
-    { id: 'DASHBOARD' as Page, label: 'Dashboard', icon: LayoutDashboard, section: 'MANAGEMENT' },
-    { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT' },
-    { id: 'VEHICLES' as Page, label: 'Veículos', icon: CarFront, section: 'MANAGEMENT' },
-    { id: 'SUPPLY_ENTRY' as Page, label: 'Entrada de Combustível', icon: PlusCircle, section: 'MANAGEMENT' },
-    { id: 'REPORTS' as Page, label: 'Relatórios', icon: ClipboardList, section: 'SYSTEM' },
-    { id: 'SETTINGS' as Page, label: 'Configurações', icon: Settings, section: 'SYSTEM' },
+    { id: 'DASHBOARD' as Page, label: 'Dashboard', icon: LayoutDashboard, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
+    { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
+    { id: 'VEHICLES' as Page, label: 'Veículos', icon: CarFront, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
+    { id: 'SUPPLY_ENTRY' as Page, label: 'Entrada de Combustível', icon: PlusCircle, section: 'MANAGEMENT', roles: ['GESTOR', 'FISCAL'] },
+    { id: 'REPORTS' as Page, label: 'Relatórios', icon: ClipboardList, section: 'SYSTEM', roles: ['GESTOR', 'SECRETARIO'] },
+    { id: 'SETTINGS' as Page, label: 'Configurações', icon: Settings, section: 'SYSTEM', roles: ['GESTOR'] },
   ];
 
   return (
@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
       <nav className="flex-1 px-4 mt-6 space-y-1 overflow-y-auto scrollbar-hide pb-20">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mb-3 mt-2">Gestão</p>
 
-        {menuItems.filter(item => item.section === 'MANAGEMENT').map((item) => (
+        {menuItems.filter(item => item.section === 'MANAGEMENT' && user && item.roles.includes(user.role)).map((item) => (
           <button
             key={item.id}
             onClick={() => setCurrentPage(item.id)}
@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
         ))}
 
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 mt-8 mb-3">Sistema</p>
-        {menuItems.filter(item => item.section === 'SYSTEM').map((item) => (
+        {menuItems.filter(item => item.section === 'SYSTEM' && user && item.roles.includes(user.role)).map((item) => (
           <button
             key={item.id}
             onClick={() => setCurrentPage(item.id)}
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-bold text-slate-800 truncate">{user?.name || 'Usuário'}</p>
-            <p className="text-xs text-slate-500 truncate">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.role === 'GESTOR' ? 'Gestor' : user?.role === 'SECRETARIO' ? 'Secretário' : 'Fiscal'}</p>
           </div>
         </div>
 
