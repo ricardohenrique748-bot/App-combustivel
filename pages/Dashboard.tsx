@@ -2,6 +2,8 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -22,7 +24,7 @@ import {
   LogIn,
   Filter
 } from 'lucide-react';
-import { CONSUMPTION_TRENDS } from '../constants';
+// import { CONSUMPTION_TRENDS } from '../constants';
 import { useFleet } from '../FleetContext';
 import { useAuth } from '../AuthContext';
 
@@ -103,6 +105,48 @@ const Dashboard: React.FC = () => {
       return true;
     });
   }, [vehicles, filterSecretariat, filterPlate]);
+
+  const logicConsumptionTrends = useMemo(() => {
+    // Pegar os últimos 30 dias para o gráfico
+    const counts: Record<string, number> = {};
+    const today = new Date();
+    
+    // Gerar os últimos 30 dias vazios para garantir que o gráfico tenha todos os dias
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      counts[dateStr] = 0;
+    }
+
+    filteredTransactions.forEach(t => {
+      if (!t.date) return;
+      // Formatos possíveis no app: "DD de Mes de YYYY" ou "YYYY-MM-DD"
+      // Vamos tentar extrair DD/MM
+      let dayMonth = "";
+      
+      if (t.date.includes(' de ')) {
+         const parts = t.date.split(' de ');
+         const day = parts[0].padStart(2, '0');
+         const monthName = parts[1].toLowerCase();
+         const monthObj = uniqueMonths.find(m => monthName.startsWith(m.label.toLowerCase().substring(0, 3)));
+         if (monthObj) dayMonth = `${day}/${monthObj.value}`;
+      } else {
+         const match = t.date.match(/(\d{2})[\/-](\d{2})/);
+         if (match) {
+            // Se for YYYY-MM-DD o match[1] é MM e match[2] é DD às vezes, ou vice versa.
+            // Para simplificar, vamos assumir que se houver transações recentes elas seguem o padrão do storage/addTransaction
+            dayMonth = `${match[1]}/${match[2]}`;
+         }
+      }
+
+      if (dayMonth && counts[dayMonth] !== undefined) {
+        counts[dayMonth] += t.volume;
+      }
+    });
+
+    return Object.entries(counts).map(([date, amount]) => ({ date, amount }));
+  }, [filteredTransactions, uniqueMonths]);
 
   const kpis = useMemo(() => {
     const activeSecretariats = filterSecretariat === 'ALL' 
@@ -374,17 +418,13 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="h-72 w-full flex items-center justify-center">
-            {CONSUMPTION_TRENDS.length > 0 ? (
+            {logicConsumptionTrends.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={CONSUMPTION_TRENDS}>
+                <BarChart data={logicConsumptionTrends}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} dy={10} />
                   <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                  <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
-                    {CONSUMPTION_TRENDS.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 2 ? '#135bec' : '#bfdbfe'} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="amount" radius={[4, 4, 0, 0]} fill="#135bec" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
