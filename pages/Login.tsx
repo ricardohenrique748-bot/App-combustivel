@@ -9,24 +9,22 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    // Simular delay de rede
-    setTimeout(() => {
-      setIsLoading(false);
-
-      if (password === '123456' || password === 'admin') {
-        const success = login(email);
-        if (!success) {
-          setError('Usuário não encontrado ou inativo.');
-        }
-      } else {
-        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+    try {
+      const success = await login(email);
+      if (!success) {
+        setError('E-mail não encontrado ou usuário inativo.');
       }
-    }, 1500);
+    } catch (err: any) {
+      setError('Ocorreu um erro ao tentar realizar o login. Tente novamente.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

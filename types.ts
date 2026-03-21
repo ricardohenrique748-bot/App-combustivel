@@ -17,15 +17,19 @@ export interface Vehicle {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
+export type FuelType = 'GASOLINA' | 'DIESEL S10' | 'DIESEL S500' | 'ETANOL';
+
 export interface Transaction {
   id: string;
   date: string;
   time: string;
   plate: string;
   driver: string;
-  fuelType: 'GASOLINA' | 'DIESEL S10' | 'DIESEL S500';
+  fuelType: FuelType;
   volume: number;
   value: number;
+  currentMileage: number;
+  previousMileage?: number;
   status: 'VERIFIED' | 'PENDING';
   efficiency?: number;
 }
