@@ -28,6 +28,7 @@ export interface Vehicle {
   secretariat: string;
   driver: string;
   status: 'ACTIVE' | 'INACTIVE';
+  initialMileage: number;
 }
 
 export type FuelType = 'GASOLINA' | 'DIESEL S10' | 'DIESEL S500' | 'ETANOL';
@@ -42,7 +43,6 @@ export interface Transaction {
   volume: number;
   value: number;
   currentMileage: number;
-  previousMileage?: number;
   status: 'VERIFIED' | 'PENDING';
   efficiency?: number;
 }

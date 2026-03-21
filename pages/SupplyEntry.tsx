@@ -17,9 +17,12 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
   const [selectedSecretariat, setSelectedSecretariat] = useState('');
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState<number | ''>('');
+  const [currentMileage, setCurrentMileage] = useState<number | ''>('');
   const [pricePerLiter, setPricePerLiter] = useState<number>(5.899);
   const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL S500'>('GASOLINA');
   const [success, setSuccess] = useState(false);
+
+  const { transactions: allTransactions } = useFleet();
 
   const filteredVehicles = useMemo(() => {
     if (!selectedSecretariat) return [];
@@ -30,11 +33,35 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
     vehicles.find(v => v.plate === plate.toUpperCase()),
     [plate, vehicles]);
 
+  const lastTransaction = useMemo(() => {
+    if (!plate) return null;
+    return allTransactions
+      .filter(t => t.plate === plate.toUpperCase())
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  }, [plate, allTransactions]);
+
+  const previousMileage = useMemo(() => {
+    if (!selectedVehicle) return 0;
+    return lastTransaction?.currentMileage || selectedVehicle.initialMileage || 0;
+  }, [selectedVehicle, lastTransaction]);
+
   const totalCost = useMemo(() => (Number(quantity) || 0) * pricePerLiter, [quantity, pricePerLiter]);
 
+  const efficiency = useMemo(() => {
+    if (!quantity || !currentMileage || !previousMileage) return 0;
+    const kmTraveled = Number(currentMileage) - previousMileage;
+    if (kmTraveled <= 0) return 0;
+    return kmTraveled / Number(quantity);
+  }, [quantity, currentMileage, previousMileage]);
+
   const handleConfirm = () => {
-    if (!selectedVehicle || Number(quantity) <= 0) {
-      alert('Por favor, identifique um veículo válido e insira a quantidade.');
+    if (!selectedVehicle || Number(quantity) <= 0 || !currentMileage) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    if (Number(currentMileage) <= previousMileage) {
+      alert(`A quilometragem atual deve ser maior que a anterior (${previousMileage} KM).`);
       return;
     }
 
@@ -47,8 +74,9 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
       fuelType: fuelType,
       volume: Number(quantity),
       value: totalCost,
+      currentMileage: Number(currentMileage),
       status: 'VERIFIED',
-      efficiency: 10 + Math.random() * 5
+      efficiency: efficiency
     });
 
     setSuccess(true);
@@ -193,7 +221,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
             
             <div className="space-y-8 pl-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3 block">Tipo de Combustível</label>
+                <label className="block text-sm font-medium text-slate-700 mb-3">Tipo de Combustível</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-100">
                   {fuelTypes.map(ft => (
                     <button
@@ -213,7 +241,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Volume Abastecido</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Volume Abastecido (L)</label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                       <Droplet className="w-5 h-5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
@@ -244,6 +272,57 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
                       step="0.01"
                       className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl pl-12 py-3.5 text-slate-800 font-semibold text-lg focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-400 outline-none transition-all hover:border-slate-300 hover:bg-slate-50"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Quilometragem Anterior</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                      <Info className="w-5 h-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="number"
+                      value={previousMileage}
+                      readOnly
+                      className="w-full bg-slate-100 border border-slate-200 rounded-2xl pl-12 py-3.5 text-slate-500 font-semibold text-lg outline-none cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Quilometragem Atual</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                      <Info className={`w-5 h-5 transition-colors ${currentMileage && Number(currentMileage) > previousMileage ? 'text-emerald-500' : 'text-slate-400'}`} />
+                    </div>
+                    <input
+                      type="number"
+                      placeholder="KM Atual"
+                      value={currentMileage}
+                      onChange={(e) => setCurrentMileage(e.target.value === '' ? '' : Number(e.target.value))}
+                      className={`w-full bg-slate-50/50 border ${currentMileage && Number(currentMileage) <= previousMileage ? 'border-red-300 ring-4 ring-red-50' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'} rounded-2xl pl-12 py-3.5 text-slate-800 font-semibold text-lg outline-none transition-all hover:border-slate-300 hover:bg-slate-50`}
+                    />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className={`p-4 rounded-2xl border transition-all duration-500 ${efficiency > 0 ? 'bg-emerald-50 border-emerald-100 opacity-100 translate-y-0' : 'bg-slate-50 border-slate-100 opacity-50 translate-y-2'}`}>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-white p-2 rounded-xl border border-emerald-100">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-emerald-600 uppercase tracking-wider">Eficiência Estimada</p>
+                          <p className="text-xl font-black text-emerald-900">{efficiency.toFixed(2)} <span className="text-sm font-bold">KM/L</span></p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-emerald-600/70">Distância Percorrida</p>
+                        <p className="text-sm font-black text-emerald-800">{(Number(currentMileage) - previousMileage) || 0} KM</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -282,7 +361,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
                 <div className="pt-2">
                   <button
                     onClick={handleConfirm}
-                    disabled={!selectedVehicle || Number(quantity) <= 0}
+                    disabled={!selectedVehicle || Number(quantity) <= 0 || !currentMileage || Number(currentMileage) <= previousMileage}
                     className="w-full bg-primary hover:bg-primary-600 text-white font-bold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:bg-primary active:scale-[0.98]"
                   >
                     <Save className="w-5 h-5" />

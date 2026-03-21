@@ -31,12 +31,13 @@ const Vehicles: React.FC = () => {
     model: '',
     secretariat: '',
     driver: '',
-    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE'
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+    initialMileage: 0
   });
 
   const handleOpenAdd = () => {
     setEditingVehicle(null);
-    setFormData({ plate: '', model: '', secretariat: secretariats[0]?.name || '', driver: '', status: 'ACTIVE' });
+    setFormData({ plate: '', model: '', secretariat: secretariats[0]?.name || '', driver: '', status: 'ACTIVE', initialMileage: 0 });
     setIsModalOpen(true);
   };
 
@@ -47,7 +48,8 @@ const Vehicles: React.FC = () => {
       model: v.model,
       secretariat: v.secretariat,
       driver: v.driver,
-      status: v.status
+      status: v.status,
+      initialMileage: v.initialMileage || 0
     });
     setIsModalOpen(true);
   };
@@ -256,6 +258,19 @@ const Vehicles: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, driver: e.target.value })}
                     placeholder="Nome do motorista"
                     className="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Quilometragem Inicial (KM)</label>
+                  <input
+                    required
+                    type="number"
+                    value={formData.initialMileage}
+                    onChange={(e) => setFormData({ ...formData, initialMileage: Number(e.target.value) })}
+                    placeholder="Ex: 50000"
+                    disabled={!!editingVehicle}
+                    className="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
                   />
                 </div>
 
