@@ -10,10 +10,11 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { Page } from './types';
 import { FleetProvider } from './FleetContext';
+import { useAuth } from './AuthContext';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, logout } = useAuth();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -48,8 +49,8 @@ const App: React.FC = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  if (!user) {
+    return <Login />;
   }
 
   return (
@@ -59,7 +60,7 @@ const App: React.FC = () => {
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           onLogout={() => {
-            setIsAuthenticated(false);
+            logout();
             setCurrentPage('DASHBOARD');
           }}
         />

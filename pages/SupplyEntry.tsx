@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Info,
-  TrendingUp
+  TrendingUp,
+  ChevronDown
 } from 'lucide-react';
 import { useFleet } from '../FleetContext';
 import { Page } from '../types';
@@ -19,12 +20,18 @@ interface SupplyEntryProps {
 }
 
 const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
-  const { vehicles, addTransaction } = useFleet();
+  const { vehicles, secretariats, addTransaction } = useFleet();
+  const [selectedSecretariat, setSelectedSecretariat] = useState('');
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState(0);
   const [pricePerLiter, setPricePerLiter] = useState(5.899);
   const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL COMUM' | 'ETANOL'>('GASOLINA');
   const [success, setSuccess] = useState(false);
+
+  const filteredVehicles = useMemo(() => {
+    if (!selectedSecretariat) return [];
+    return vehicles.filter(v => v.secretariat === selectedSecretariat && v.status === 'ACTIVE');
+  }, [vehicles, selectedSecretariat]);
 
   const selectedVehicle = useMemo(() =>
     vehicles.find(v => v.plate === plate.toUpperCase()),
@@ -101,20 +108,41 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
             </div>
             <div className="space-y-4">
               <div>
+                <label className="block text-sm font-bold mb-2">Secretaria</label>
+                <div className="relative">
+                  <select
+                    value={selectedSecretariat}
+                    onChange={(e) => {
+                      setSelectedSecretariat(e.target.value);
+                      setPlate('');
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none"
+                  >
+                    <option value="">Selecione uma secretaria</option>
+                    {secretariats.map(sec => (
+                      <option key={sec.id} value={sec.name}>{sec.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-bold mb-2">Placa do Veículo</label>
                 <div className="relative">
-                  <input
-                    type="text"
+                  <select
                     value={plate}
-                    onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                    className={`w-full bg-slate-50 border ${selectedVehicle ? 'border-emerald-500' : 'border-slate-200'} rounded-xl p-4 text-xl font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all`}
-                    placeholder="AAA-0000"
-                  />
-                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    onChange={(e) => setPlate(e.target.value)}
+                    disabled={!selectedSecretariat}
+                    className={`w-full bg-slate-50 border ${selectedVehicle ? 'border-emerald-500' : 'border-slate-200'} rounded-xl p-4 text-xl font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none ${!selectedSecretariat ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <option value="">{selectedSecretariat ? 'Selecione a placa' : 'Selecione a secretaria primeiro'}</option>
+                    {filteredVehicles.map(v => (
+                      <option key={v.plate} value={v.plate}>{v.plate} - {v.model}</option>
+                    ))}
+                  </select>
+                  <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
-                {!selectedVehicle && plate.length >= 7 && (
-                  <p className="text-rose-500 text-xs mt-2 font-bold">Placa não encontrada na base da frota.</p>
-                )}
               </div>
             </div>
           </section>

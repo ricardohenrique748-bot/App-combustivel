@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Lock, LogIn, ShieldCheck, Zap, Activity, ChevronRight, Globe, LockKeyhole } from 'lucide-react';
+import { useAuth } from '../AuthContext';
 
-interface LoginProps {
-  onLogin: () => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
+const Login: React.FC = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,11 +18,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setTimeout(() => {
       setIsLoading(false);
 
-      if (
-        (email === 'ricardo.luz@eunaman.com.br' && password === '123456') ||
-        (email === 'admin@prefeitura.gov.br' && password === 'admin')
-      ) {
-        onLogin();
+      if (password === '123456' || password === 'admin') {
+        const success = login(email);
+        if (!success) {
+          setError('Usuário não encontrado ou inativo.');
+        }
       } else {
         setError('Credenciais inválidas. Verifique seu e-mail e senha.');
       }

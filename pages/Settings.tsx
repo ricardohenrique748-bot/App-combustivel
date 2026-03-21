@@ -17,35 +17,12 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { User as UserType } from '../types';
+import { useAuth } from '../AuthContext';
 
 const Settings: React.FC = () => {
+  const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = React.useState('general');
-  const [users, setUsers] = React.useState<UserType[]>([
-    {
-      id: '1',
-      name: 'Ricardo Henrique',
-      email: 'ricardo.luz@eunaman.com.br',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      lastAccess: 'Agora'
-    },
-    {
-      id: '2',
-      name: 'Administrador Prefeitura',
-      email: 'admin@prefeitura.gov.br',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      lastAccess: 'Ontem, 14:30'
-    },
-    {
-      id: '3',
-      name: 'Gestor de Transportes',
-      email: 'gestor@prefeitura.gov.br',
-      role: 'MANAGER',
-      status: 'ACTIVE',
-      lastAccess: 'Há 2 dias'
-    }
-  ]);
+
 
   const tabs = [
     { id: 'general', label: 'Geral', icon: SettingsIcon },
@@ -95,7 +72,28 @@ const Settings: React.FC = () => {
                   <Users className="w-5 h-5 text-primary" />
                   Gestão de Usuários
                 </h3>
-                <button className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary/20 transition-all">
+                <button
+                  onClick={() => {
+                    const email = prompt('E-mail do novo usuário:');
+                    if (email) {
+                      const name = prompt('Nome do novo usuário:');
+                      const roleInput = prompt('Cargo (ADMIN ou MANAGER):', 'MANAGER');
+                      if (name && (roleInput === 'ADMIN' || roleInput === 'MANAGER')) {
+                        addUser({
+                          id: Date.now().toString(),
+                          name,
+                          email,
+                          role: roleInput as 'ADMIN' | 'MANAGER',
+                          status: 'ACTIVE',
+                          lastAccess: 'Ainda não acessou'
+                        });
+                      } else {
+                        alert('Dados inválidos. Cargo deve ser ADMIN ou MANAGER.');
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary/20 transition-all"
+                >
                   <PlusCircle className="w-4 h-4" />
                   Convidar Usuário
                 </button>
@@ -147,12 +145,30 @@ const Settings: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                            <button
+                              onClick={() => {
+                                const newName = prompt('Novo nome:', user.name);
+                                const newEmail = prompt('Novo email:', user.email);
+                                if (newName && newEmail) {
+                                  updateUser(user.id, { name: newName, email: newEmail });
+                                }
+                              }}
+                              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                            >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => {
+                                  if (confirm('Tem certeza que deseja excluir?')) {
+                                    deleteUser(user.id);
+                                  }
+                                }}
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

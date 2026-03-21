@@ -13,6 +13,7 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { Page } from '../types';
+import { useAuth } from '../AuthContext';
 
 interface SidebarProps {
   currentPage: Page;
@@ -21,6 +22,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout }) => {
+  const { user } = useAuth();
   const menuItems = [
     { id: 'DASHBOARD' as Page, label: 'Dashboard', icon: LayoutDashboard, section: 'MANAGEMENT' },
     { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT' },
@@ -80,14 +82,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           <div className="relative">
             <img
               className="w-10 h-10 rounded-lg object-cover ring-2 ring-slate-100"
-              src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff"
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
               alt="User"
             />
             <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
           </div>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-bold text-slate-800 truncate">Administrador</p>
-            <p className="text-xs text-slate-500 truncate">Gestão de Frotas</p>
+            <p className="text-sm font-bold text-slate-800 truncate">{user?.name || 'Usuário'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.role === 'ADMIN' ? 'Administrador' : 'Gestor'}</p>
           </div>
         </div>
 
