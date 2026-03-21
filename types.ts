@@ -30,4 +30,13 @@ export interface Transaction {
   efficiency?: number;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MANAGER' | 'VIEWER';
+  status: 'ACTIVE' | 'INACTIVE';
+  lastAccess?: string;
+}
+
 export type Page = 'DASHBOARD' | 'SECRETARIATS' | 'VEHICLES' | 'SUPPLY_ENTRY' | 'REPORTS' | 'SETTINGS';

@@ -1,5 +1,4 @@
-
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -27,6 +26,20 @@ import { useFleet } from '../FleetContext';
 
 const Dashboard: React.FC = () => {
   const { secretariats, transactions, vehicles } = useFleet();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const alerts = secretariats.filter(s => s.status !== 'HEALTHY');
 
   const kpis = useMemo(() => {
     const totalContracted = secretariats.reduce((acc, s) => acc + s.contracted, 0);
@@ -61,10 +74,50 @@ const Dashboard: React.FC = () => {
               className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
             />
           </div>
-          <button className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 relative">
-            <Bell className="w-5 h-5 text-slate-600" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-          </button>
+          <div className="relative" ref={notificationRef}>
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 relative"
+            >
+              <Bell className="w-5 h-5 text-slate-600" />
+              {alerts.length > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+              )}
+            </button>
+            
+            {showNotifications && (
+              <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="p-4 border-b border-slate-100 bg-slate-50">
+                  <h3 className="font-bold text-slate-900">Notificações</h3>
+                  <p className="text-xs text-slate-500">Alertas do sistema</p>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {alerts.length > 0 ? (
+                    alerts.map(s => (
+                      <div key={s.id} className="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-sm font-semibold text-slate-900">{s.name}</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
+                            s.status === 'CRITICAL' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'
+                          }`}>
+                            {s.status === 'CRITICAL' ? 'Crítico' : 'Aviso'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Apenas <span className="font-bold text-slate-700">{s.remaining.toLocaleString()} L</span> restantes da cota.
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center">
+                      <ShieldCheck className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">Nenhuma nova notificação</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <button className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-primary-600 transition-colors">
             <Download className="w-4 h-4" />
             Relatórios

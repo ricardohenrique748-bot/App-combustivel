@@ -8,14 +8,48 @@ import {
   Save,
   Globe,
   Smartphone,
-  Check
+  Check,
+  Users,
+  Mail,
+  MoreVertical,
+  Trash2,
+  Edit2,
+  PlusCircle
 } from 'lucide-react';
+import { User as UserType } from '../types';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState('general');
+  const [users, setUsers] = React.useState<UserType[]>([
+    {
+      id: '1',
+      name: 'Ricardo Henrique',
+      email: 'ricardo.luz@eunaman.com.br',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+      lastAccess: 'Agora'
+    },
+    {
+      id: '2',
+      name: 'Administrador Prefeitura',
+      email: 'admin@prefeitura.gov.br',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+      lastAccess: 'Ontem, 14:30'
+    },
+    {
+      id: '3',
+      name: 'Gestor de Transportes',
+      email: 'gestor@prefeitura.gov.br',
+      role: 'MANAGER',
+      status: 'ACTIVE',
+      lastAccess: 'Há 2 dias'
+    }
+  ]);
 
   const tabs = [
     { id: 'general', label: 'Geral', icon: SettingsIcon },
+    { id: 'users', label: 'Usuários', icon: Users },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'security', label: 'Segurança', icon: Shield },
     { id: 'data', label: 'Dados & API', icon: Database },
@@ -54,6 +88,81 @@ const Settings: React.FC = () => {
 
         {/* Content Area */}
         <div className="lg:col-span-3 space-y-6">
+          {activeTab === 'users' && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Gestão de Usuários
+                </h3>
+                <button className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary/20 transition-all">
+                  <PlusCircle className="w-4 h-4" />
+                  Convidar Usuário
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-left">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Usuário</th>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Cargo</th>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Status</th>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Último Acesso</th>
+                      <th className="px-6 py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {users.map((user) => (
+                      <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-xs">
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">{user.name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium">{user.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${user.role === 'ADMIN'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-slate-100 text-slate-500'
+                            }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className={`w-2 h-2 rounded-full ${user.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                            <span className="text-xs font-bold text-slate-600">
+                              {user.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs text-slate-500 font-medium">{user.lastAccess}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'general' && (
             <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 animate-in slide-in-from-bottom-4 duration-300">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
