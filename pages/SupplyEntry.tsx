@@ -18,7 +18,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [pricePerLiter, setPricePerLiter] = useState<number>(5.899);
-  const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL COMUM' | 'ETANOL'>('GASOLINA');
+  const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL S500'>('GASOLINA');
   const [success, setSuccess] = useState(false);
 
   const filteredVehicles = useMemo(() => {
@@ -72,9 +72,8 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
 
   const fuelTypes = [
     { id: 'GASOLINA', label: 'Gasolina' },
-    { id: 'ETANOL', label: 'Etanol' },
+    { id: 'DIESEL S500', label: 'Diesel S500' },
     { id: 'DIESEL S10', label: 'Diesel S10' },
-    { id: 'DIESEL COMUM', label: 'Diesel Comum' },
   ] as const;
 
   return (

@@ -99,9 +99,8 @@ const Reports: React.FC = () => {
             >
               <option value="ALL">Todos os Tipos</option>
               <option value="GASOLINA">Gasolina</option>
-              <option value="ETANOL">Etanol</option>
+              <option value="DIESEL S500">Diesel S500</option>
               <option value="DIESEL S10">Diesel S10</option>
-              <option value="DIESEL COMUM">Diesel Comum</option>
             </select>
           </div>
           <button

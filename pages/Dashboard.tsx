@@ -123,12 +123,19 @@ const Dashboard: React.FC = () => {
       .filter(t => t.date && (t.date.includes('Out') || t.date.includes('-10-') || t.date.includes('/10/'))) // Default to Oct if no filter
       .reduce((acc, t) => acc + t.volume, 0);
 
+    const fuelConsumption = {
+      gasolina: filteredTransactions.filter(t => t.fuelType === 'GASOLINA').reduce((acc, t) => acc + t.volume, 0),
+      dieselS500: filteredTransactions.filter(t => t.fuelType === 'DIESEL S500').reduce((acc, t) => acc + t.volume, 0),
+      dieselS10: filteredTransactions.filter(t => t.fuelType === 'DIESEL S10').reduce((acc, t) => acc + t.volume, 0),
+    };
+
     return {
       totalContracted,
       totalConsumed,
       totalRemaining,
       monthlyConsumption,
-      percentAvailable: totalContracted > 0 ? (Math.max(0, totalRemaining) / totalContracted) * 100 : 0
+      percentAvailable: totalContracted > 0 ? (Math.max(0, totalRemaining) / totalContracted) * 100 : 0,
+      fuelConsumption
     };
   }, [secretariats, transactions, filteredTransactions, filterSecretariat, filterPlate, filterYear, filterMonth]);
 
@@ -285,11 +292,27 @@ const Dashboard: React.FC = () => {
               <p className="text-3xl font-extrabold text-slate-900">{kpis.totalRemaining.toLocaleString()}</p>
               <p className="text-sm text-primary font-semibold mt-1">{kpis.percentAvailable.toFixed(0)}% Disponível</p>
             </div>
-            <div className="relative w-14 h-14">
+            <div className="relative w-14 h-14 shrink-0">
               <svg className="w-full h-full transform -rotate-90">
                 <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100" />
                 <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray="150" strokeDashoffset={150 - (150 * (kpis.percentAvailable / 100))} className="text-primary transition-all duration-1000" />
               </svg>
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Consumo por Tipo</p>
+            <div className="flex justify-between items-center text-xs text-slate-600 mb-1">
+              <span>Gasolina</span>
+              <span className="font-semibold text-slate-900">{kpis.fuelConsumption.gasolina.toLocaleString()} L</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-slate-600 mb-1">
+              <span>Diesel S500</span>
+              <span className="font-semibold text-slate-900">{kpis.fuelConsumption.dieselS500.toLocaleString()} L</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-slate-600">
+              <span>Diesel S10</span>
+              <span className="font-semibold text-slate-900">{kpis.fuelConsumption.dieselS10.toLocaleString()} L</span>
             </div>
           </div>
         </div>
