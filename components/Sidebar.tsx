@@ -24,12 +24,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout }) => {
   const { user } = useAuth();
   const menuItems = [
-    { id: 'DASHBOARD' as Page, label: 'Dashboard', icon: LayoutDashboard, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
-    { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
-    { id: 'VEHICLES' as Page, label: 'Veículos', icon: CarFront, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO'] },
+    { id: 'DASHBOARD' as Page, label: 'Dashboard', icon: LayoutDashboard, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
+    { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
+    { id: 'VEHICLES' as Page, label: 'Veículos', icon: CarFront, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
     { id: 'SUPPLY_ENTRY' as Page, label: 'Entrada de Combustível', icon: PlusCircle, section: 'MANAGEMENT', roles: ['GESTOR', 'FISCAL'] },
-    { id: 'REPORTS' as Page, label: 'Relatórios', icon: ClipboardList, section: 'SYSTEM', roles: ['GESTOR', 'SECRETARIO'] },
-    { id: 'SETTINGS' as Page, label: 'Configurações', icon: Settings, section: 'SYSTEM', roles: ['GESTOR'] },
+    { id: 'REPORTS' as Page, label: 'Relatórios', icon: ClipboardList, section: 'SYSTEM', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
+    { id: 'SETTINGS' as Page, label: 'Configurações', icon: Settings, section: 'SYSTEM', roles: ['GESTOR', 'FISCAL'] },
   ];
 
   return (
@@ -89,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-bold text-slate-800 truncate">{user?.name || 'Usuário'}</p>
-            <p className="text-xs text-slate-500 truncate">{user?.role?.toUpperCase() === 'GESTOR' ? 'Gestor' : user?.role?.toUpperCase() === 'SECRETARIO' ? 'Secretário' : 'Fiscal'}</p>
+            <p className="text-xs text-slate-500 truncate">{user?.role?.toUpperCase() === 'GESTOR' ? 'Gestor' : user?.role?.toUpperCase() === 'SECRETARIO' ? 'Secretário' : 'Fiscal - Nível Gestor'}</p>
           </div>
         </div>
 
