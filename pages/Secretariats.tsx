@@ -69,7 +69,7 @@ const Secretariats: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-slate-900">Gestão de Secretarias</h1>
           <p className="text-sm text-slate-500">Controle de cotas e centros de custo governamentais.</p>
         </div>
-        {user?.role === 'GESTOR' && (
+        {user?.role?.toUpperCase() === 'GESTOR' && (
           <button
             onClick={handleOpenAdd}
             className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition-all shadow-lg shadow-primary/20"
@@ -93,7 +93,7 @@ const Secretariats: React.FC = () => {
                       }`}>
                       {s.shortName}
                     </div>
-                    {user?.role === 'GESTOR' && (
+                    {user?.role?.toUpperCase() === 'GESTOR' && (
                       <button
                         onClick={() => handleOpenEdit(s)}
                         className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors border border-transparent hover:border-primary/10 group/btn"
@@ -238,7 +238,7 @@ const Secretariats: React.FC = () => {
                     {editingSec ? 'Salvar' : 'Criar'}
                   </button>
                 </div>
-                {editingSec && user?.role === 'GESTOR' && (
+                {editingSec && user?.role?.toUpperCase() === 'GESTOR' && (
                   <button
                     type="button"
                     onClick={handleDelete}
