@@ -8,6 +8,7 @@ import Secretariats from './pages/Secretariats';
 import Vehicles from './pages/Vehicles';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Transactions from './pages/Transactions';
 import { Page } from './types';
 import { FleetProvider } from './FleetContext';
 import { useAuth } from './AuthContext';
@@ -32,6 +33,8 @@ const App: React.FC = () => {
         return <SupplyEntry setCurrentPage={setCurrentPage} />;
       case 'REPORTS':
         return <Reports />;
+      case 'TRANSACTIONS':
+        return <Transactions />;
       case 'SETTINGS':
         return <Settings />;
       default:
