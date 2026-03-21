@@ -8,7 +8,7 @@ interface FleetContextType {
   vehicles: Vehicle[];
   transactions: Transaction[];
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  addSecretariat: (secretariat: { name: string; shortName: string; contracted: number; consumed?: number }) => Promise<void>;
+  addSecretariat: (secretariat: { name: string; shortName: string; contracted: number; consumed?: number; notes?: string }) => Promise<void>;
   updateSecretariat: (id: string, updates: Partial<Secretariat>) => Promise<void>;
   deleteSecretariat: (id: string) => Promise<void>;
   addVehicle: (vehicle: Vehicle) => Promise<void>;
@@ -89,7 +89,7 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const addSecretariat = async (newSec: { name: string; shortName: string; contracted: number; consumed?: number }) => {
+  const addSecretariat = async (newSec: { name: string; shortName: string; contracted: number; consumed?: number; notes?: string }) => {
     const consumed = newSec.consumed || 0;
     const remaining = newSec.contracted - consumed;
     const id = Math.random().toString(36).substr(2, 9);
@@ -132,6 +132,30 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const { error } = await supabase.from('secretariats').update(fullUpdates).eq('id', id);
 
     if (!error) {
+      // Registrar no histórico se houver mudança de valor
+      if (updates.contracted !== undefined && updates.contracted !== target.contracted) {
+        await supabase.from('secretariat_history').insert([{
+          secretariat_id: id,
+          type: 'CONTRATADO',
+          old_value: target.contracted,
+          new_value: updates.contracted,
+          change_value: updates.contracted - target.contracted,
+          user_email: user?.email,
+          description: 'Ajuste manual de cota contratada'
+        }]);
+      }
+      if (updates.consumed !== undefined && updates.consumed !== target.consumed) {
+        await supabase.from('secretariat_history').insert([{
+          secretariat_id: id,
+          type: 'CONSUMO',
+          old_value: target.consumed,
+          new_value: updates.consumed,
+          change_value: updates.consumed - target.consumed,
+          user_email: user?.email,
+          description: 'Ajuste manual de consumo acumulado'
+        }]);
+      }
+
       setSecretariats(prev => prev.map(s => {
         if (s.id === id) {
           return { ...s, ...fullUpdates };

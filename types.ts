@@ -7,6 +7,19 @@ export interface Secretariat {
   consumed: number;
   remaining: number;
   status: 'HEALTHY' | 'WARNING' | 'CRITICAL';
+  notes?: string;
+}
+
+export interface SecretariatHistory {
+  id: string;
+  secretariat_id: string;
+  date: string;
+  type: 'CONTRATADO' | 'CONSUMO';
+  old_value: number;
+  new_value: number;
+  change_value: number;
+  user_email?: string;
+  description?: string;
 }
 
 export interface Vehicle {

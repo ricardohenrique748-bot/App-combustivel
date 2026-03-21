@@ -25,12 +25,13 @@ const Secretariats: React.FC = () => {
     name: '',
     shortName: '',
     contracted: 0,
-    consumed: 0
+    consumed: 0,
+    notes: ''
   });
 
   const handleOpenAdd = () => {
     setEditingSec(null);
-    setFormData({ name: '', shortName: '', contracted: 0, consumed: 0 });
+    setFormData({ name: '', shortName: '', contracted: 0, consumed: 0, notes: '' });
     setIsModalOpen(true);
   };
 
@@ -40,7 +41,8 @@ const Secretariats: React.FC = () => {
       name: sec.name,
       shortName: sec.shortName,
       contracted: sec.contracted,
-      consumed: sec.consumed
+      consumed: sec.consumed,
+      notes: sec.notes || ''
     });
     setIsModalOpen(true);
   };
@@ -220,6 +222,17 @@ const Secretariats: React.FC = () => {
                     />
                   </div>
                 )}
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Observações</label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Ex: Secretaria responsável pela frota escolar."
+                    rows={3}
+                    className="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-3 pt-4">
