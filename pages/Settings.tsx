@@ -17,15 +17,17 @@ import {
   X,
   UserCheck,
   ClipboardList,
-  ShieldCheck
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { useAuth } from '../AuthContext';
+import { useFleet } from '../FleetContext';
 
 // ── Modal Convidar / Editar Usuário ──────────────────────────────────────────
 interface UserModalProps {
   initialData?: Partial<UserType>;
-  onSave: (data: { name: string; email: string; role: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; status: 'ACTIVE' | 'INACTIVE' }) => void;
+  onSave: (data: { name: string; email: string; role: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; status: 'ACTIVE' | 'INACTIVE'; secretariatId?: string }) => void;
   onClose: () => void;
   title: string;
 }
@@ -62,10 +64,12 @@ const colorMap: Record<string, string> = {
 const colorMapUnselected = 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50';
 
 const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, title }) => {
+  const { secretariats } = useFleet();
   const [name, setName] = useState(initialData?.name || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [role, setRole] = useState<'GESTOR' | 'SECRETARIO' | 'FISCAL'>(initialData?.role || 'FISCAL');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>(initialData?.status || 'ACTIVE');
+  const [secretariatId, setSecretariatId] = useState(initialData?.secretariatId || '');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -73,6 +77,11 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
     if (!name.trim()) e.name = 'Nome é obrigatório.';
     if (!email.trim()) e.email = 'E-mail é obrigatório.';
     else if (!/^\S+@\S+\.\S+$/.test(email)) e.email = 'E-mail inválido.';
+
+    if ((role === 'SECRETARIO' || role === 'FISCAL') && !secretariatId) {
+      e.secretariatId = 'É necessário vincular o usuário a uma secretaria/órgão.';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -80,7 +89,13 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
   const handleSubmit = (ev: React.FormEvent) => {
     ev.preventDefault();
     if (!validate()) return;
-    onSave({ name: name.trim(), email: email.trim(), role, status });
+    onSave({ 
+      name: name.trim(), 
+      email: email.trim(), 
+      role, 
+      status, 
+      secretariatId: secretariatId || undefined 
+    });
   };
 
   return (
@@ -162,6 +177,25 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
                 );
               })}
             </div>
+          </div>
+
+          {/* Órgão / Secretaria */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Órgão / Secretaria</label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <select
+                value={secretariatId}
+                onChange={e => setSecretariatId(e.target.value)}
+                className={`w-full pl-10 pr-10 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/40 appearance-none ${errors.secretariatId ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
+              >
+                <option value="">Nenhum / Sem vínculo específico</option>
+                {secretariats.map(sec => (
+                  <option key={sec.id} value={sec.id}>{sec.name}</option>
+                ))}
+              </select>
+            </div>
+            {errors.secretariatId && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.secretariatId}</p>}
           </div>
 
           {/* Status (somente edição) */}
