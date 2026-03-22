@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Settings as SettingsIcon,
   Bell,
@@ -11,17 +11,210 @@ import {
   Check,
   Users,
   Mail,
-  MoreVertical,
   Trash2,
   Edit2,
-  PlusCircle
+  PlusCircle,
+  X,
+  UserCheck,
+  ClipboardList,
+  ShieldCheck
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { useAuth } from '../AuthContext';
 
+// ── Modal Convidar / Editar Usuário ──────────────────────────────────────────
+interface UserModalProps {
+  initialData?: Partial<UserType>;
+  onSave: (data: { name: string; email: string; role: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; status: 'ACTIVE' | 'INACTIVE' }) => void;
+  onClose: () => void;
+  title: string;
+}
+
+const roleOptions: { value: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; label: string; description: string; icon: React.ElementType; color: string }[] = [
+  {
+    value: 'GESTOR',
+    label: 'Gestor',
+    description: 'Acesso total ao sistema, relatórios e configurações.',
+    icon: ShieldCheck,
+    color: 'primary',
+  },
+  {
+    value: 'FISCAL',
+    label: 'Fiscal',
+    description: 'Pode registrar abastecimentos e visualizar relatórios.',
+    icon: ClipboardList,
+    color: 'emerald',
+  },
+  {
+    value: 'SECRETARIO',
+    label: 'Secretário',
+    description: 'Visualiza cotas e consumo da secretaria vinculada.',
+    icon: UserCheck,
+    color: 'amber',
+  },
+];
+
+const colorMap: Record<string, string> = {
+  primary: 'border-primary bg-primary/5 text-primary',
+  emerald: 'border-emerald-500 bg-emerald-50 text-emerald-700',
+  amber: 'border-amber-500 bg-amber-50 text-amber-700',
+};
+const colorMapUnselected = 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50';
+
+const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, title }) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [email, setEmail] = useState(initialData?.email || '');
+  const [role, setRole] = useState<'GESTOR' | 'SECRETARIO' | 'FISCAL'>(initialData?.role || 'FISCAL');
+  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>(initialData?.status || 'ACTIVE');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!name.trim()) e.name = 'Nome é obrigatório.';
+    if (!email.trim()) e.email = 'E-mail é obrigatório.';
+    else if (!/^\S+@\S+\.\S+$/.test(email)) e.email = 'E-mail inválido.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    if (!validate()) return;
+    onSave({ name: name.trim(), email: email.trim(), role, status });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-black text-slate-800">{title}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+          >
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Nome */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Ex: João Silva"
+              className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/40 ${errors.name ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
+            />
+            {errors.name && <p className="text-xs text-rose-500 font-semibold">{errors.name}</p>}
+          </div>
+
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-mail</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="usuario@prefeitura.gov.br"
+                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/40 ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
+              />
+            </div>
+            {errors.email && <p className="text-xs text-rose-500 font-semibold">{errors.email}</p>}
+          </div>
+
+          {/* Cargo */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsabilidade / Cargo</label>
+            <div className="grid grid-cols-1 gap-2">
+              {roleOptions.map(opt => {
+                const isSelected = role === opt.value;
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRole(opt.value)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all duration-150 ${isSelected ? colorMap[opt.color] : colorMapUnselected}`}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold leading-tight">{opt.label}</p>
+                      <p className="text-[11px] opacity-70 leading-tight mt-0.5">{opt.description}</p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Status (somente edição) */}
+          {initialData && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</label>
+              <div className="flex gap-3">
+                {(['ACTIVE', 'INACTIVE'] as const).map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStatus(s)}
+                    className={`flex-1 py-2.5 rounded-xl border-2 text-xs font-black uppercase tracking-widest transition-all ${status === s
+                      ? s === 'ACTIVE'
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : 'border-rose-400 bg-rose-50 text-rose-600'
+                      : 'border-slate-200 bg-white text-slate-400 hover:border-slate-300'
+                    }`}
+                  >
+                    {s === 'ACTIVE' ? '● Ativo' : '○ Inativo'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-600 transition-all shadow-lg shadow-primary/25 text-sm"
+            >
+              {initialData ? 'Salvar' : 'Convidar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Settings: React.FC = () => {
   const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = React.useState('general');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
 
 
   const tabs = [
@@ -73,30 +266,7 @@ const Settings: React.FC = () => {
                   Gestão de Usuários
                 </h3>
                 <button
-                  onClick={() => {
-                    const email = prompt('E-mail do novo usuário:');
-                    if (email) {
-                      const name = prompt('Nome do novo usuário:');
-                      const roleInput = prompt('Cargo (GESTOR, SECRETARIO ou FISCAL):', 'FISCAL');
-                      if (name && (roleInput === 'GESTOR' || roleInput === 'SECRETARIO' || roleInput === 'FISCAL')) {
-                        let secretariatId;
-                        if (roleInput === 'SECRETARIO') {
-                          secretariatId = prompt('ID da Secretaria (Ex: sec-obras, sec-saude):');
-                        }
-                        addUser({
-                          id: Date.now().toString(),
-                          name,
-                          email,
-                          role: roleInput as 'GESTOR' | 'SECRETARIO' | 'FISCAL',
-                          status: 'ACTIVE',
-                          lastAccess: 'Ainda não acessou',
-                          ...(secretariatId ? { secretariatId } : {})
-                        });
-                      } else {
-                        alert('Dados inválidos. Cargo deve ser GESTOR, SECRETARIO ou FISCAL.');
-                      }
-                    }
-                  }}
+                  onClick={() => setShowInviteModal(true)}
                   className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary/20 transition-all"
                 >
                   <PlusCircle className="w-4 h-4" />
@@ -151,13 +321,7 @@ const Settings: React.FC = () => {
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => {
-                                const newName = prompt('Novo nome:', user.name);
-                                const newEmail = prompt('Novo email:', user.email);
-                                if (newName && newEmail) {
-                                  updateUser(user.id, { name: newName, email: newEmail });
-                                }
-                              }}
+                              onClick={() => setEditingUser(user)}
                               className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -182,6 +346,32 @@ const Settings: React.FC = () => {
                 </table>
               </div>
             </div>
+          )}
+
+          {/* ── Modais ── */}
+          {showInviteModal && (
+            <UserModal
+              title="Convidar Novo Usuário"
+              onClose={() => setShowInviteModal(false)}
+              onSave={(data) => {
+                addUser({
+                  ...data,
+                  lastAccess: 'Ainda não acessou',
+                });
+                setShowInviteModal(false);
+              }}
+            />
+          )}
+          {editingUser && (
+            <UserModal
+              title="Editar Usuário"
+              initialData={editingUser}
+              onClose={() => setEditingUser(null)}
+              onSave={(data) => {
+                updateUser(editingUser.id, data);
+                setEditingUser(null);
+              }}
+            />
           )}
 
           {activeTab === 'general' && (
