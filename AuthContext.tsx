@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   users: User[];
   loading: boolean;
-  login: (email: string) => Promise<boolean>;
+  login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
   addUser: (user: Omit<User, 'id'>) => Promise<void>;
   updateUser: (id: string, updates: Partial<User>) => Promise<void>;
@@ -49,13 +49,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     loadUsers().finally(() => setLoading(false));
   }, []);
 
-  const login = async (email: string) => {
-    const { data, error } = await supabase
+  const login = async (email: string, password?: string) => {
+    let query = supabase
       .from('users')
       .select('*')
       .eq('email', email)
-      .eq('status', 'ACTIVE')
-      .single();
+      .eq('status', 'ACTIVE');
+    
+    if (password) {
+      query = query.eq('password', password);
+    }
+
+    const { data, error } = await query.single();
 
     if (!error && data) {
       const now = new Date().toLocaleString('pt-BR');
@@ -92,6 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: newUser.id,
       name: newUser.name,
       email: newUser.email,
+      password: newUser.password,
       role: newUser.role,
       status: newUser.status,
       secretariat_id: newUser.secretariatId
@@ -108,6 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.email) dbUpdates.email = updates.email;
+    if (updates.password) dbUpdates.password = updates.password;
     if (updates.role) dbUpdates.role = updates.role;
     if (updates.status) dbUpdates.status = updates.status;
     if (updates.secretariatId !== undefined) dbUpdates.secretariat_id = updates.secretariatId;

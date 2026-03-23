@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import { Secretariat, Vehicle, Transaction } from './types';
+import { Secretariat, Vehicle, Transaction, BalanceRequest, FuelPrices } from './types';
 import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
@@ -14,6 +14,11 @@ interface FleetContextType {
   addVehicle: (vehicle: Vehicle) => Promise<void>;
   updateVehicle: (plate: string, updates: Partial<Vehicle>) => Promise<void>;
   deleteVehicle: (plate: string) => Promise<void>;
+  balanceRequests: BalanceRequest[];
+  addBalanceRequest: (request: Omit<BalanceRequest, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateBalanceRequestStatus: (id: string, status: 'APPROVED' | 'REJECTED') => Promise<void>;
+  fuelPrices: FuelPrices;
+  updateFuelPrices: (prices: FuelPrices) => Promise<void>;
 }
 
 const FleetContext = createContext<FleetContextType | undefined>(undefined);
@@ -22,19 +27,32 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [secretariats, setSecretariats] = useState<Secretariat[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balanceRequests, setBalanceRequests] = useState<BalanceRequest[]>([]);
+  const [fuelPrices, setFuelPrices] = useState<FuelPrices>({
+    GASOLINA: 5.899,
+    ETANOL: 3.999,
+    DIESEL_S10: 6.120,
+    DIESEL_COMUM: 5.990
+  });
   const { user } = useAuth();
 
   const loadData = async () => {
     try {
-      const [secRes, vehRes, txtRes] = await Promise.all([
+      const [secRes, vehRes, txtRes, reqRes, settingsRes] = await Promise.all([
         supabase.from('secretariats').select('*'),
         supabase.from('vehicles').select('*'),
-        supabase.from('transactions').select('*').order('date', { ascending: false }).order('time', { ascending: false })
+        supabase.from('transactions').select('*').order('date', { ascending: false }).order('time', { ascending: false }),
+        supabase.from('balance_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('system_settings').select('*').eq('key', 'fuel_prices')
       ]);
 
       if (secRes.data) setSecretariats(secRes.data as Secretariat[]);
       if (vehRes.data) setVehicles(vehRes.data as Vehicle[]);
       if (txtRes.data) setTransactions(txtRes.data as Transaction[]);
+      if (reqRes.data) setBalanceRequests(reqRes.data as BalanceRequest[]);
+      if (settingsRes.data && settingsRes.data.length > 0) {
+        setFuelPrices(settingsRes.data[0].value as FuelPrices);
+      }
     } catch (error) {
       console.error("Erro ao carregar dados do Supabase:", error);
     }
@@ -203,6 +221,48 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const addBalanceRequest = async (request: Omit<BalanceRequest, 'id' | 'created_at' | 'updated_at'>) => {
+    const { data, error } = await supabase.from('balance_requests').insert([request]).select();
+    if (!error && data) {
+      setBalanceRequests(prev => [data[0], ...prev]);
+    } else {
+      console.error("Erro ao adicionar solicitação de saldo:", error);
+    }
+  };
+
+  const updateBalanceRequestStatus = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    const target = balanceRequests.find(r => r.id === id);
+    if (!target) return;
+
+    const { error } = await supabase.from('balance_requests').update({ status }).eq('id', id);
+    if (!error) {
+      setBalanceRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+
+      // Se foi aprovado, vamos tentar atualizar o contrato da secretaria
+      if (status === 'APPROVED') {
+        const secretariat = secretariats.find(s => s.id === target.secretariat_id);
+        if (secretariat) {
+          const newContracted = secretariat.contracted + target.requested_volume;
+          await updateSecretariat(secretariat.id, { contracted: newContracted });
+        }
+      }
+    } else {
+      console.error("Erro ao atualizar solicitação de saldo:", error);
+    }
+  };
+
+  const updateFuelPrices = async (prices: FuelPrices) => {
+    const { error } = await supabase
+      .from('system_settings')
+      .upsert({ key: 'fuel_prices', value: prices }, { onConflict: 'key' });
+
+    if (!error) {
+      setFuelPrices(prices);
+    } else {
+      console.error("Erro ao atualizar preços de combustível:", error);
+    }
+  };
+
   const filteredSecretariats = useMemo(() => {
     if (user?.role === 'SECRETARIO' && user?.secretariatId) {
       return secretariats.filter(s => 
@@ -241,7 +301,12 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       deleteSecretariat,
       addVehicle,
       updateVehicle,
-      deleteVehicle
+      deleteVehicle,
+      balanceRequests,
+      addBalanceRequest,
+      updateBalanceRequestStatus,
+      fuelPrices,
+      updateFuelPrices
     }}>
       {children}
     </FleetContext.Provider>

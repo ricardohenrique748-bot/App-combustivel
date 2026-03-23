@@ -15,9 +15,9 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const success = await login(email);
+      const success = await login(email, password);
       if (!success) {
-        setError('E-mail não encontrado ou usuário inativo.');
+        setError('E-mail ou senha incorretos, ou usuário inativo.');
       }
     } catch (err: any) {
       setError('Ocorreu um erro ao tentar realizar o login. Tente novamente.');

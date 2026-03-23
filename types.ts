@@ -51,6 +51,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   role: 'GESTOR' | 'SECRETARIO' | 'FISCAL';
   status: 'ACTIVE' | 'INACTIVE';
   lastAccess?: string;
@@ -58,3 +59,25 @@ export interface User {
 }
 
 export type Page = 'DASHBOARD' | 'SECRETARIATS' | 'VEHICLES' | 'SUPPLY_ENTRY' | 'REPORTS' | 'SETTINGS' | 'TRANSACTIONS';
+
+export interface BalanceRequest {
+  id: string;
+  secretariat_id: string;
+  fiscal_name: string;
+  requested_volume: number;
+  justification: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FuelPrices {
+  GASOLINA: number;
+  ETANOL: number;
+  DIESEL_S10: number;
+  DIESEL_COMUM: number;
+}
+
+export interface SystemSettings {
+  fuel_prices: FuelPrices;
+}

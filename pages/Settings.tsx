@@ -18,7 +18,8 @@ import {
   UserCheck,
   ClipboardList,
   ShieldCheck,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-react';
 import { User as UserType } from '../types';
 import { useAuth } from '../AuthContext';
@@ -27,7 +28,7 @@ import { useFleet } from '../FleetContext';
 // ── Modal Convidar / Editar Usuário ──────────────────────────────────────────
 interface UserModalProps {
   initialData?: Partial<UserType>;
-  onSave: (data: { name: string; email: string; role: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; status: 'ACTIVE' | 'INACTIVE'; secretariatId?: string }) => void;
+  onSave: (data: { name: string; email: string; password?: string; role: 'GESTOR' | 'SECRETARIO' | 'FISCAL'; status: 'ACTIVE' | 'INACTIVE'; secretariatId?: string }) => void;
   onClose: () => void;
   title: string;
 }
@@ -67,6 +68,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
   const { secretariats } = useFleet();
   const [name, setName] = useState(initialData?.name || '');
   const [email, setEmail] = useState(initialData?.email || '');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState<'GESTOR' | 'SECRETARIO' | 'FISCAL'>(initialData?.role || 'FISCAL');
   const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>(initialData?.status || 'ACTIVE');
   const [secretariatId, setSecretariatId] = useState(initialData?.secretariatId || '');
@@ -77,6 +79,12 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
     if (!name.trim()) e.name = 'Nome é obrigatório.';
     if (!email.trim()) e.email = 'E-mail é obrigatório.';
     else if (!/^\S+@\S+\.\S+$/.test(email)) e.email = 'E-mail inválido.';
+
+    if (!initialData && !password.trim()) {
+      e.password = 'A senha é obrigatória.';
+    } else if (password && password.length < 6) {
+      e.password = 'A senha deve ter pelo menos 6 caracteres.';
+    }
 
     if ((role === 'SECRETARIO' || role === 'FISCAL') && !secretariatId) {
       e.secretariatId = 'É necessário vincular o usuário a uma secretaria/órgão.';
@@ -92,6 +100,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
     onSave({ 
       name: name.trim(), 
       email: email.trim(), 
+      password: password || undefined,
       role, 
       status, 
       secretariatId: secretariatId || undefined 
@@ -134,8 +143,8 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
           </div>
 
           {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-mail</label>
+          <div className="space-y-1.5 flex-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-mail Corporativo</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -143,10 +152,31 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="usuario@prefeitura.gov.br"
-                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary/40 ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
+                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 ${errors.email ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
               />
             </div>
-            {errors.email && <p className="text-xs text-rose-500 font-semibold">{errors.email}</p>}
+            {errors.email && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.email}</p>}
+          </div>
+
+          {/* Senha */}
+          <div className="space-y-1.5 flex-1">
+            <div className="flex justify-between items-baseline">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha de Acesso</label>
+              {initialData && (
+                <span className="text-[10px] text-slate-400 font-medium">(Opcional para edição)</span>
+              )}
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className={`w-full pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary/40 ${errors.password ? 'border-rose-400 bg-rose-50' : 'border-slate-200'}`}
+              />
+            </div>
+            {errors.password && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.password}</p>}
           </div>
 
           {/* Cargo */}
@@ -246,9 +276,25 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
 
 const Settings: React.FC = () => {
   const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
+  const { secretariats, fuelPrices: contextFuelPrices, updateFuelPrices } = useFleet();
   const [activeTab, setActiveTab] = React.useState('general');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
+
+  const [localFuelPrices, setLocalFuelPrices] = useState(contextFuelPrices);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sincroniza estado local se o contexto mudar (ex: carregamento inicial)
+  React.useEffect(() => {
+    setLocalFuelPrices(contextFuelPrices);
+  }, [contextFuelPrices]);
+
+  const handleSavePrices = async () => {
+    setIsSaving(true);
+    await updateFuelPrices(localFuelPrices);
+    setIsSaving(false);
+    alert('Preços atualizados com sucesso!');
+  };
 
 
   const tabs = [
@@ -266,9 +312,13 @@ const Settings: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-slate-900">Configurações do Sistema</h1>
           <p className="text-sm text-slate-500">Ajuste preferências globais e parâmetros de controle.</p>
         </div>
-        <button className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 shadow-lg active:scale-95 transition-all">
+        <button 
+          onClick={activeTab === 'general' ? handleSavePrices : undefined}
+          disabled={isSaving}
+          className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-primary-600 shadow-lg active:scale-95 transition-all disabled:opacity-50"
+        >
           <Save className="w-4 h-4" />
-          Salvar Alterações
+          {isSaving ? 'Salvando...' : 'Salvar Alterações'}
         </button>
       </div>
 
@@ -421,7 +471,8 @@ const Settings: React.FC = () => {
                   <input
                     type="number"
                     step="0.001"
-                    defaultValue="5.899"
+                    value={localFuelPrices.GASOLINA}
+                    onChange={e => setLocalFuelPrices(prev => ({ ...prev, GASOLINA: parseFloat(e.target.value) || 0 }))}
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
                 </div>
@@ -430,7 +481,8 @@ const Settings: React.FC = () => {
                   <input
                     type="number"
                     step="0.001"
-                    defaultValue="3.999"
+                    value={localFuelPrices.ETANOL}
+                    onChange={e => setLocalFuelPrices(prev => ({ ...prev, ETANOL: parseFloat(e.target.value) || 0 }))}
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
                 </div>
@@ -439,7 +491,8 @@ const Settings: React.FC = () => {
                   <input
                     type="number"
                     step="0.001"
-                    defaultValue="6.120"
+                    value={localFuelPrices.DIESEL_S10}
+                    onChange={e => setLocalFuelPrices(prev => ({ ...prev, DIESEL_S10: parseFloat(e.target.value) || 0 }))}
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
                 </div>
@@ -448,7 +501,8 @@ const Settings: React.FC = () => {
                   <input
                     type="number"
                     step="0.001"
-                    defaultValue="5.990"
+                    value={localFuelPrices.DIESEL_COMUM}
+                    onChange={e => setLocalFuelPrices(prev => ({ ...prev, DIESEL_COMUM: parseFloat(e.target.value) || 0 }))}
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
                 </div>

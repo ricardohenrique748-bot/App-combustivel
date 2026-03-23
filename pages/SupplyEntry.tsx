@@ -13,14 +13,18 @@ interface SupplyEntryProps {
 }
 
 const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
-  const { vehicles, secretariats, addTransaction } = useFleet();
+  const { vehicles, secretariats, addTransaction, fuelPrices } = useFleet();
   const [selectedSecretariat, setSelectedSecretariat] = useState('');
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [currentMileage, setCurrentMileage] = useState<number | ''>('');
-  const [pricePerLiter, setPricePerLiter] = useState<number>(5.899);
-  const [fuelType, setFuelType] = useState<'GASOLINA' | 'DIESEL S10' | 'DIESEL S500'>('GASOLINA');
+  const [pricePerLiter, setPricePerLiter] = useState<number>(fuelPrices.GASOLINA);
+  const [fuelType, setFuelType] = useState<keyof typeof fuelPrices>('GASOLINA');
   const [success, setSuccess] = useState(false);
+
+  React.useEffect(() => {
+    setPricePerLiter(fuelPrices[fuelType]);
+  }, [fuelType, fuelPrices]);
 
   const { transactions: allTransactions } = useFleet();
 
@@ -100,8 +104,9 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
 
   const fuelTypes = [
     { id: 'GASOLINA', label: 'Gasolina' },
-    { id: 'DIESEL S500', label: 'Diesel S500' },
-    { id: 'DIESEL S10', label: 'Diesel S10' },
+    { id: 'ETANOL', label: 'Etanol' },
+    { id: 'DIESEL_S10', label: 'Diesel S10' },
+    { id: 'DIESEL_COMUM', label: 'Diesel Comum' },
   ] as const;
 
   return (
