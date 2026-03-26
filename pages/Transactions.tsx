@@ -15,7 +15,7 @@ import { useFleet } from '../FleetContext';
 import { Transaction } from '../types';
 
 const Transactions: React.FC = () => {
-  const { transactions, vehicles } = useFleet();
+  const { transactions, vehicles, fuelStations } = useFleet();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterFuel, setFilterFuel] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -106,7 +106,8 @@ const Transactions: React.FC = () => {
               <tr className="bg-slate-50/80">
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Data & Hora</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Veículo / Motorista</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Combustível</th>
+                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Combustível</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Posto</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 text-center">Volume (L)</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Valor Total</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 text-center">Status</th>
@@ -138,11 +139,14 @@ const Transactions: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-xs font-black text-slate-700">{t.fuelType}</span>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Tipo Regular</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                    {fuelStations.find(fs => fs.id === t.fuel_station_id)?.name || t.fuelStation || 'Não informado'}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-sm font-black text-slate-800">{t.volume.toFixed(2)}</span>

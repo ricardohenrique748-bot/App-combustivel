@@ -29,6 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setCurrentPage, onLogout
     { id: 'SECRETARIATS' as Page, label: 'Secretarias', icon: Building2, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
     { id: 'VEHICLES' as Page, label: 'Veículos', icon: CarFront, section: 'MANAGEMENT', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
     { id: 'TRANSACTIONS' as Page, label: 'Transações', icon: History, section: 'MANAGEMENT', roles: ['GESTOR', 'FISCAL'] },
+    { id: 'FUEL_STATION' as Page, label: 'Posto de Combustível', icon: Fuel, section: 'MANAGEMENT', roles: ['GESTOR', 'FISCAL'] },
     { id: 'SUPPLY_ENTRY' as Page, label: 'Entrada de Combustível', icon: PlusCircle, section: 'MANAGEMENT', roles: ['GESTOR', 'FISCAL'] },
     { id: 'REPORTS' as Page, label: 'Relatórios', icon: ClipboardList, section: 'SYSTEM', roles: ['GESTOR', 'SECRETARIO', 'FISCAL'] },
     { id: 'SETTINGS' as Page, label: 'Configurações', icon: Settings, section: 'SYSTEM', roles: ['GESTOR', 'FISCAL'] },

@@ -13,8 +13,9 @@ interface SupplyEntryProps {
 }
 
 const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
-  const { vehicles, secretariats, addTransaction, fuelPrices } = useFleet();
+  const { vehicles, secretariats, addTransaction, fuelPrices, fuelStations } = useFleet();
   const [selectedSecretariat, setSelectedSecretariat] = useState('');
+  const [fuelStationId, setFuelStationId] = useState('');
   const [plate, setPlate] = useState('');
   const [quantity, setQuantity] = useState<number | ''>('');
   const [currentMileage, setCurrentMileage] = useState<number | ''>('');
@@ -30,7 +31,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
 
   const filteredVehicles = useMemo(() => {
     if (!selectedSecretariat) return [];
-    return vehicles.filter(v => v.secretariat === selectedSecretariat && v.status === 'ACTIVE');
+    return vehicles.filter(v => v.secretariat_id === selectedSecretariat && v.status === 'ACTIVE');
   }, [vehicles, selectedSecretariat]);
 
   const selectedVehicle = useMemo(() =>
@@ -59,7 +60,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
   }, [quantity, currentMileage, previousMileage]);
 
   const handleConfirm = () => {
-    if (!selectedVehicle || Number(quantity) <= 0 || !currentMileage) {
+    if (!selectedVehicle || Number(quantity) <= 0 || !currentMileage || !fuelStationId) {
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
@@ -80,7 +81,8 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
       value: totalCost,
       currentMileage: Number(currentMileage),
       status: 'VERIFIED',
-      efficiency: efficiency
+      efficiency: efficiency,
+      fuel_station_id: fuelStationId
     });
 
     setSuccess(true);
@@ -156,7 +158,29 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
                   >
                     <option value="">Selecione uma secretaria...</option>
                     {secretariats.map(sec => (
-                      <option key={sec.id} value={sec.name}>{sec.name}</option>
+                      <option key={sec.id} value={sec.id}>{sec.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none z-10">
+                    <ChevronDown className="w-5 h-5 text-slate-400 transition-transform group-focus-within:rotate-180" />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Posto de Combustível</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <Building2 className="w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  </div>
+                  <select
+                    value={fuelStationId}
+                    onChange={(e) => setFuelStationId(e.target.value)}
+                    className="relative w-full bg-slate-50/50 border border-slate-200 rounded-2xl pl-12 pr-12 py-3.5 text-slate-700 text-sm font-medium focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all appearance-none cursor-pointer hover:bg-slate-50 hover:border-slate-300"
+                  >
+                    <option value="">Selecione o posto...</option>
+                    {fuelStations.filter(fs => fs.status === 'ACTIVE').map(fs => (
+                      <option key={fs.id} value={fs.id}>{fs.name}</option>
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none z-10">
@@ -366,7 +390,7 @@ const SupplyEntry: React.FC<SupplyEntryProps> = ({ setCurrentPage }) => {
                 <div className="pt-2">
                   <button
                     onClick={handleConfirm}
-                    disabled={!selectedVehicle || Number(quantity) <= 0 || !currentMileage || Number(currentMileage) <= previousMileage}
+                    disabled={!selectedVehicle || Number(quantity) <= 0 || !currentMileage || Number(currentMileage) <= previousMileage || !fuelStationId}
                     className="w-full bg-primary hover:bg-primary-600 text-white font-bold py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:bg-primary active:scale-[0.98]"
                   >
                     <Save className="w-5 h-5" />

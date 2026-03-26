@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import { Secretariat, Vehicle, Transaction, BalanceRequest, FuelPrices } from './types';
+import { Secretariat, Vehicle, Transaction, BalanceRequest, FuelPrices, FuelStation } from './types';
 import { supabase } from './supabase';
 import { useAuth } from './AuthContext';
 
@@ -18,6 +18,10 @@ interface FleetContextType {
   addBalanceRequest: (request: Omit<BalanceRequest, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateBalanceRequestStatus: (id: string, status: 'APPROVED' | 'REJECTED') => Promise<void>;
   fuelPrices: FuelPrices;
+  fuelStations: FuelStation[];
+  addFuelStation: (station: Omit<FuelStation, 'id' | 'created_at'>) => Promise<void>;
+  updateFuelStation: (id: string, station: Partial<FuelStation>) => Promise<void>;
+  deleteFuelStation: (id: string) => Promise<void>;
   updateFuelPrices: (prices: FuelPrices) => Promise<void>;
 }
 
@@ -28,6 +32,7 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceRequests, setBalanceRequests] = useState<BalanceRequest[]>([]);
+  const [fuelStations, setFuelStations] = useState<FuelStation[]>([]);
   const [fuelPrices, setFuelPrices] = useState<FuelPrices>({
     GASOLINA: 5.899,
     ETANOL: 3.999,
@@ -38,18 +43,33 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const loadData = async () => {
     try {
-      const [secRes, vehRes, txtRes, reqRes, settingsRes] = await Promise.all([
+      const [secRes, vehRes, txtRes, reqRes, fuelStationsRes, settingsRes] = await Promise.all([
         supabase.from('secretariats').select('*'),
         supabase.from('vehicles').select('*'),
         supabase.from('transactions').select('*').order('date', { ascending: false }).order('time', { ascending: false }),
         supabase.from('balance_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('fuel_stations').select('*, fuel_station_secretariats(secretariat_id)').order('created_at', { ascending: false }),
         supabase.from('system_settings').select('*').eq('key', 'fuel_prices')
       ]);
 
       if (secRes.data) setSecretariats(secRes.data as Secretariat[]);
-      if (vehRes.data) setVehicles(vehRes.data as Vehicle[]);
+      if (vehRes.data) {
+        // Map 'secretariat' column to 'secretariat_id' property for frontend consistency
+        const mappedVehicles = (vehRes.data as any[]).map(v => ({
+          ...v,
+          secretariat_id: v.secretariat_id || v.secretariat
+        }));
+        setVehicles(mappedVehicles as Vehicle[]);
+      }
       if (txtRes.data) setTransactions(txtRes.data as Transaction[]);
       if (reqRes.data) setBalanceRequests(reqRes.data as BalanceRequest[]);
+      if (fuelStationsRes.data) {
+        const stations = (fuelStationsRes.data as any[]).map(s => ({
+          ...s,
+          secretariat_ids: s.fuel_station_secretariats?.map((fss: any) => fss.secretariat_id) || []
+        }));
+        setFuelStations(stations as FuelStation[]);
+      }
       if (settingsRes.data && settingsRes.data.length > 0) {
         setFuelPrices(settingsRes.data[0].value as FuelPrices);
       }
@@ -81,13 +101,14 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Update Secretariat consumption
     const vehicle = vehicles.find(v => v.plate === newTx.plate);
     if (vehicle) {
-      // Find the correct secretariat based on vehicle exact secretariat string
-      const secretariat = secretariats.find(s => s.name === vehicle.secretariat);
+      // Find the correct secretariat based on vehicle secretariat_id
+      const secretariat = secretariats.find(s => s.id === vehicle.secretariat_id);
 
       if (secretariat) {
-        const newConsumed = secretariat.consumed + newTx.volume;
-        const newRemaining = secretariat.contracted - newConsumed;
-        const newStatus = newRemaining < secretariat.contracted * 0.1 ? 'CRITICAL' : newRemaining < secretariat.contracted * 0.25 ? 'WARNING' : 'HEALTHY';
+        const newConsumed = (secretariat.consumed || 0) + newTx.volume;
+        const newRemaining = (secretariat.contracted || 0) - newConsumed;
+        const newStatus = newRemaining < (secretariat.contracted || 0) * 0.1 ? 'CRITICAL' : 
+                          newRemaining < (secretariat.contracted || 0) * 0.25 ? 'WARNING' : 'HEALTHY';
 
         const updates = {
           consumed: newConsumed,
@@ -195,18 +216,24 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const addVehicle = async (vehicle: Vehicle) => {
-    const { error } = await supabase.from('vehicles').insert([vehicle]);
+    // For DB compatibility, we store the ID in the 'secretariat' column if 'secretariat_id' column doesn't exist
+    const dbVehicle = { ...vehicle, secretariat: vehicle.secretariat_id };
+    const { error } = await supabase.from('vehicles').insert([dbVehicle]);
     if (!error) {
-      setVehicles(prev => [...prev, vehicle]);
+      loadData();
     } else {
       console.error("Erro ao adicionar veículo:", error);
     }
   };
 
   const updateVehicle = async (plate: string, updates: Partial<Vehicle>) => {
-    const { error } = await supabase.from('vehicles').update(updates).eq('plate', plate);
+    const dbUpdates = { ...updates };
+    if (updates.secretariat_id) {
+      (dbUpdates as any).secretariat = updates.secretariat_id;
+    }
+    const { error } = await supabase.from('vehicles').update(dbUpdates).eq('plate', plate);
     if (!error) {
-      setVehicles(prev => prev.map(v => v.plate === plate ? { ...v, ...updates } : v));
+      loadData();
     } else {
       console.error("Erro ao atualizar veículo:", error);
     }
@@ -263,6 +290,65 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const addFuelStation = async (station: Omit<FuelStation, 'id' | 'created_at'>) => {
+    const { secretariat_ids, ...stationData } = station;
+    const { data, error } = await supabase.from('fuel_stations').insert([stationData]).select().single();
+    
+    if (!error && data) {
+      if (secretariat_ids && secretariat_ids.length > 0) {
+        const junctionData = secretariat_ids.map(sid => ({
+          fuel_station_id: (data as any).id,
+          secretariat_id: sid
+        }));
+        await supabase.from('fuel_station_secretariats').insert(junctionData);
+      }
+      setFuelStations(prev => [{ ...data, secretariat_ids: secretariat_ids || [] }, ...prev]);
+    } else {
+      console.error("Erro ao adicionar posto de combustível:", error);
+    }
+  };
+
+  const updateFuelStation = async (id: string, station: Partial<FuelStation>) => {
+    const { secretariat_ids, id: _id, created_at: _ca, ...stationData } = station;
+    
+    // Update basic data
+    if (Object.keys(stationData).length > 0) {
+      const { error } = await supabase.from('fuel_stations').update(stationData).eq('id', id);
+      if (error) {
+        console.error("Erro ao atualizar dados básicos do posto:", error);
+        return;
+      }
+    }
+
+    // Update secretariats if needed
+    if (secretariat_ids) {
+      // Simple strategy: delete all and re-insert
+      await supabase.from('fuel_station_secretariats').delete().eq('fuel_station_id', id);
+      
+      if (secretariat_ids.length > 0) {
+        const junctionData = secretariat_ids.map(sid => ({
+          fuel_station_id: id,
+          secretariat_id: sid
+        }));
+        await supabase.from('fuel_station_secretariats').insert(junctionData);
+      }
+    }
+
+    setFuelStations(prev => prev.map(s => s.id === id ? { ...s, ...station } : s));
+  };
+
+  const deleteFuelStation = async (id: string) => {
+    // Cascade delete should handle junction if configured, but let's be safe
+    await supabase.from('fuel_station_secretariats').delete().eq('fuel_station_id', id);
+    const { error } = await supabase.from('fuel_stations').delete().eq('id', id);
+    
+    if (!error) {
+      setFuelStations(prev => prev.filter(s => s.id !== id));
+    } else {
+      console.error("Erro ao excluir posto de combustível:", error);
+    }
+  };
+
   const filteredSecretariats = useMemo(() => {
     if (user?.role === 'SECRETARIO' && user?.secretariatId) {
       return secretariats.filter(s => 
@@ -276,8 +362,8 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const filteredVehicles = useMemo(() => {
     if (user?.role === 'SECRETARIO') {
-      const allowedSecs = filteredSecretariats.map(s => s.name);
-      return vehicles.filter(v => allowedSecs.includes(v.secretariat));
+      const allowedSecIds = filteredSecretariats.map(s => s.id);
+      return vehicles.filter(v => allowedSecIds.includes(v.secretariat_id));
     }
     return vehicles;
   }, [vehicles, filteredSecretariats, user]);
@@ -305,6 +391,10 @@ export const FleetProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       balanceRequests,
       addBalanceRequest,
       updateBalanceRequestStatus,
+      fuelStations,
+      addFuelStation,
+      updateFuelStation,
+      deleteFuelStation,
       fuelPrices,
       updateFuelPrices
     }}>

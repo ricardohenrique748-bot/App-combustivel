@@ -19,9 +19,11 @@ import {
   ClipboardList,
   ShieldCheck,
   Building2,
-  Lock
+  Lock,
+  MapPin,
+  Plus
 } from 'lucide-react';
-import { User as UserType } from '../types';
+import { User as UserType, FuelStation } from '../types';
 import { useAuth } from '../AuthContext';
 import { useFleet } from '../FleetContext';
 
@@ -110,7 +112,6 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/60">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -127,9 +128,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Nome */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</label>
             <input
@@ -142,8 +141,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             {errors.name && <p className="text-xs text-rose-500 font-semibold">{errors.name}</p>}
           </div>
 
-          {/* Email */}
-          <div className="space-y-1.5 flex-1">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-mail Corporativo</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -158,8 +156,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             {errors.email && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.email}</p>}
           </div>
 
-          {/* Senha */}
-          <div className="space-y-1.5 flex-1">
+          <div className="space-y-1.5">
             <div className="flex justify-between items-baseline">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Senha de Acesso</label>
               {initialData && (
@@ -179,7 +176,6 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             {errors.password && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.password}</p>}
           </div>
 
-          {/* Cargo */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsabilidade / Cargo</label>
             <div className="grid grid-cols-1 gap-2">
@@ -209,7 +205,6 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             </div>
           </div>
 
-          {/* Órgão / Secretaria */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Órgão / Secretaria</label>
             <div className="relative">
@@ -228,7 +223,6 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             {errors.secretariatId && <p className="text-xs text-rose-500 font-semibold mt-1">{errors.secretariatId}</p>}
           </div>
 
-          {/* Status (somente edição) */}
           {initialData && (
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</label>
@@ -252,7 +246,6 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -276,7 +269,7 @@ const UserModal: React.FC<UserModalProps> = ({ initialData, onSave, onClose, tit
 
 const Settings: React.FC = () => {
   const { users, addUser, updateUser, deleteUser, user: currentUser } = useAuth();
-  const { secretariats, fuelPrices: contextFuelPrices, updateFuelPrices } = useFleet();
+  const { secretariats, fuelPrices: contextFuelPrices, updateFuelPrices, fuelStations, addFuelStation, updateFuelStation, deleteFuelStation } = useFleet();
   const [activeTab, setActiveTab] = React.useState('general');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
@@ -284,7 +277,16 @@ const Settings: React.FC = () => {
   const [localFuelPrices, setLocalFuelPrices] = useState(contextFuelPrices);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sincroniza estado local se o contexto mudar (ex: carregamento inicial)
+  // Estados para Gestão de Postos
+  const [showAddStationModal, setShowAddStationModal] = useState(false);
+  const [editingStation, setEditingStation] = useState<FuelStation | null>(null);
+  const [newStation, setNewStation] = useState<Partial<FuelStation>>({
+    name: '',
+    address: '',
+    region: '',
+    status: 'ACTIVE'
+  });
+
   React.useEffect(() => {
     setLocalFuelPrices(contextFuelPrices);
   }, [contextFuelPrices]);
@@ -296,10 +298,10 @@ const Settings: React.FC = () => {
     alert('Preços atualizados com sucesso!');
   };
 
-
   const tabs = [
     { id: 'general', label: 'Geral', icon: SettingsIcon },
     { id: 'users', label: 'Usuários', icon: Users },
+    { id: 'stations', label: 'Postos', icon: Building2 },
     { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'security', label: 'Segurança', icon: Shield },
     { id: 'data', label: 'Dados & API', icon: Database },
@@ -323,7 +325,6 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Navigation Sidebar */}
         <nav className="lg:col-span-1 space-y-2">
           {tabs.map((item) => (
             <button
@@ -340,8 +341,7 @@ const Settings: React.FC = () => {
           ))}
         </nav>
 
-        {/* Content Area */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-6 text-left">
           {activeTab === 'users' && (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-center justify-between">
@@ -358,14 +358,13 @@ const Settings: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-left">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Usuário</th>
                       <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Cargo</th>
                       <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Status</th>
-                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Último Acesso</th>
                       <th className="px-6 py-4"></th>
                     </tr>
                   </thead>
@@ -399,9 +398,6 @@ const Settings: React.FC = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-xs text-slate-500 font-medium">{user.lastAccess}</span>
-                        </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
@@ -432,16 +428,94 @@ const Settings: React.FC = () => {
             </div>
           )}
 
-          {/* ── Modais ── */}
+          {activeTab === 'stations' && (
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  Postos Credenciados
+                </h3>
+                <button
+                  onClick={() => setShowAddStationModal(true)}
+                  className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-xs hover:bg-primary/20 transition-all"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Novo Posto
+                </button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Posto</th>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Cidade/Região</th>
+                      <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest text-[10px]">Status</th>
+                      <th className="px-6 py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {fuelStations.map((station) => (
+                      <tr key={station.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">{station.name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium">{station.address}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1 text-slate-600 font-medium">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {station.region}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest ${
+                            station.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                          }`}>
+                            {station.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setEditingStation(station)}
+                              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('Tem certeza que deseja excluir?')) {
+                                  deleteFuelStation(station.id);
+                                }
+                              }}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── Modais de Usuário ── */}
           {showInviteModal && (
             <UserModal
               title="Convidar Novo Usuário"
               onClose={() => setShowInviteModal(false)}
               onSave={(data) => {
-                addUser({
-                  ...data,
-                  lastAccess: 'Ainda não acessou',
-                });
+                addUser({ ...data, lastAccess: 'Ainda não acessou' });
                 setShowInviteModal(false);
               }}
             />
@@ -456,6 +530,110 @@ const Settings: React.FC = () => {
                 setEditingUser(null);
               }}
             />
+          )}
+
+          {/* ── Modais de Posto ── */}
+          {(showAddStationModal || editingStation) && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-left">
+              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <h2 className="text-lg font-black text-slate-800">
+                      {editingStation ? 'Editar Posto' : 'Novo Posto Credenciado'}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => { setShowAddStationModal(false); setEditingStation(null); }}
+                    className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nome do Posto</label>
+                    <input
+                      type="text"
+                      value={editingStation?.name ?? newStation.name}
+                      onChange={(e) => {
+                        if (editingStation) setEditingStation({ ...editingStation, name: e.target.value });
+                        else setNewStation({ ...newStation, name: e.target.value });
+                      }}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Endereço Completo</label>
+                    <input
+                      type="text"
+                      value={editingStation?.address ?? newStation.address}
+                      onChange={(e) => {
+                        if (editingStation) setEditingStation({ ...editingStation, address: e.target.value });
+                        else setNewStation({ ...newStation, address: e.target.value });
+                      }}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cidade/Região</label>
+                      <input
+                        type="text"
+                        value={editingStation?.region ?? newStation.region}
+                        onChange={(e) => {
+                          if (editingStation) setEditingStation({ ...editingStation, region: e.target.value });
+                          else setNewStation({ ...newStation, region: e.target.value });
+                        }}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Status</label>
+                      <select
+                        value={editingStation?.status ?? newStation.status}
+                        onChange={(e) => {
+                          const val = e.target.value as 'ACTIVE' | 'INACTIVE';
+                          if (editingStation) setEditingStation({ ...editingStation, status: val });
+                          else setNewStation({ ...newStation, status: val });
+                        }}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none"
+                      >
+                        <option value="ACTIVE">Ativo</option>
+                        <option value="INACTIVE">Inativo</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => { setShowAddStationModal(false); setEditingStation(null); }}
+                      className="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 transition-all text-sm"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (editingStation) {
+                          updateFuelStation(editingStation.id, editingStation);
+                          setEditingStation(null);
+                        } else {
+                          addFuelStation(newStation as any);
+                          setNewStation({ name: '', address: '', region: '', status: 'ACTIVE' });
+                          setShowAddStationModal(false);
+                        }
+                      }}
+                      className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-600 transition-all shadow-lg text-sm"
+                    >
+                      {editingStation ? 'Salvar' : 'Cadastrar'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === 'general' && (
@@ -505,21 +683,6 @@ const Settings: React.FC = () => {
                     onChange={e => setLocalFuelPrices(prev => ({ ...prev, DIESEL_COMUM: parseFloat(e.target.value) || 0 }))}
                     className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
                   />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Frequência de Relatório</label>
-                  <select className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold appearance-none">
-                    <option>Semanal (Segunda-feira)</option>
-                    <option>Quinzenal</option>
-                    <option>Mensal</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Fuso Horário</label>
-                  <select className="w-full p-3 bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold appearance-none">
-                    <option>Brasília (GMT-3)</option>
-                    <option>Manaus (GMT-4)</option>
-                  </select>
                 </div>
               </div>
             </section>
@@ -572,12 +735,6 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 mb-4">Recomendamos trocar sua senha a cada 90 dias.</p>
                   <button className="text-xs font-black text-primary uppercase tracking-widest hover:underline">Atualizar Senha</button>
                 </div>
-
-                <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl">
-                  <p className="text-sm font-bold text-rose-800">Sessões Ativas</p>
-                  <p className="text-xs text-rose-600/70 mb-4">Existem 3 dispositivos conectados à sua conta no momento.</p>
-                  <button className="text-xs font-black text-rose-600 uppercase tracking-widest hover:underline">Encerrar Todas as Sessões</button>
-                </div>
               </div>
             </section>
           )}
@@ -599,25 +756,6 @@ const Settings: React.FC = () => {
                     <p className="text-xs text-slate-500">Forçar atualização de todos os dashboards</p>
                   </button>
                 </div>
-              </section>
-
-              <section className="bg-emerald-600 rounded-2xl p-6 text-white flex items-center justify-between shadow-xl shadow-emerald-100">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Smartphone className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold opacity-80 uppercase tracking-widest text-[10px]">App de Motorista</p>
-                    <p className="text-xl font-black">Sincronização Ativa</p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <div className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></div>
-                      <span className="text-[10px] font-bold">142 dispositivos conectados</span>
-                    </div>
-                  </div>
-                </div>
-                <button className="bg-white text-emerald-600 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                  Gerenciar Chaves
-                </button>
               </section>
             </div>
           )}

@@ -9,6 +9,7 @@ import Vehicles from './pages/Vehicles';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Transactions from './pages/Transactions';
+import FuelStation from './pages/FuelStation';
 import { Page } from './types';
 import { FleetProvider } from './FleetContext';
 import { useAuth } from './AuthContext';
@@ -35,6 +36,8 @@ const App: React.FC = () => {
         return <Reports />;
       case 'TRANSACTIONS':
         return <Transactions />;
+      case 'FUEL_STATION':
+        return <FuelStation />;
       case 'SETTINGS':
         return <Settings />;
       default:

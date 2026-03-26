@@ -29,7 +29,7 @@ const Vehicles: React.FC = () => {
   const [formData, setFormData] = useState({
     plate: '',
     model: '',
-    secretariat: '',
+    secretariat_id: '',
     driver: '',
     status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
     initialMileage: 0
@@ -37,7 +37,7 @@ const Vehicles: React.FC = () => {
 
   const handleOpenAdd = () => {
     setEditingVehicle(null);
-    setFormData({ plate: '', model: '', secretariat: secretariats[0]?.name || '', driver: '', status: 'ACTIVE', initialMileage: 0 });
+    setFormData({ plate: '', model: '', secretariat_id: secretariats[0]?.id || '', driver: '', status: 'ACTIVE', initialMileage: 0 });
     setIsModalOpen(true);
   };
 
@@ -46,7 +46,7 @@ const Vehicles: React.FC = () => {
     setFormData({
       plate: v.plate,
       model: v.model,
-      secretariat: v.secretariat,
+      secretariat_id: v.secretariat_id,
       driver: v.driver,
       status: v.status,
       initialMileage: v.initialMileage || 0
@@ -155,7 +155,9 @@ const Vehicles: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-600">{v.secretariat}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-600">
+                      {secretariats.find(s => s.id === v.secretariat_id)?.name || 'N/A'}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <User className="w-3 h-3 text-slate-400" />
@@ -238,13 +240,13 @@ const Vehicles: React.FC = () => {
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-1">Secretaria</label>
                   <select
                     required
-                    value={formData.secretariat}
-                    onChange={(e) => setFormData({ ...formData, secretariat: e.target.value })}
+                    value={formData.secretariat_id}
+                    onChange={(e) => setFormData({ ...formData, secretariat_id: e.target.value })}
                     className="w-full mt-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                   >
                     <option value="" disabled>Selecione uma secretaria</option>
                     {secretariats.map(s => (
-                      <option key={s.id} value={s.name}>{s.name}</option>
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>

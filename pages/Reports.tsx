@@ -19,7 +19,7 @@ import {
 import { useFleet } from '../FleetContext';
 
 const Reports: React.FC = () => {
-  const { transactions, vehicles } = useFleet();
+  const { transactions, vehicles, fuelStations } = useFleet();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterFuel, setFilterFuel] = useState('ALL');
   const [filterSecretariat, setFilterSecretariat] = useState('ALL');
@@ -134,6 +134,7 @@ const Reports: React.FC = () => {
               <tr className="bg-slate-50">
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Data/Hora</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Placa</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Posto</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Motorista</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Litros</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Valor</th>
@@ -147,6 +148,9 @@ const Reports: React.FC = () => {
                     {t.date} <br /> <span className="text-[10px] opacity-60">{t.time}</span>
                   </td>
                   <td className="px-6 py-4 text-sm font-black text-slate-800 font-mono">{t.plate}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                    {fuelStations.find(fs => fs.id === t.fuel_station_id)?.name || t.fuelStation || '---'}
+                  </td>
                   <td className="px-6 py-4 text-sm text-slate-600">{t.driver}</td>
                   <td className="px-6 py-4 text-sm font-medium text-slate-700">{t.volume.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm font-bold text-slate-700">R$ {t.value.toFixed(2)}</td>
@@ -159,7 +163,7 @@ const Reports: React.FC = () => {
               ))}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-bold">Nenhuma transação encontrada para os filtros aplicados.</td>
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-400 font-bold">Nenhuma transação encontrada para os filtros aplicados.</td>
                 </tr>
               )}
             </tbody>

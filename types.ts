@@ -25,13 +25,13 @@ export interface SecretariatHistory {
 export interface Vehicle {
   plate: string;
   model: string;
-  secretariat: string;
+  secretariat_id: string; // Changed from secretariat
   driver: string;
   status: 'ACTIVE' | 'INACTIVE';
   initialMileage: number;
 }
 
-export type FuelType = 'GASOLINA' | 'DIESEL S10' | 'DIESEL S500' | 'ETANOL';
+export type FuelType = 'GASOLINA' | 'DIESEL S10' | 'DIESEL COMUM' | 'ETANOL';
 
 export interface Transaction {
   id: string;
@@ -45,6 +45,8 @@ export interface Transaction {
   currentMileage: number;
   status: 'VERIFIED' | 'PENDING';
   efficiency?: number;
+  fuel_station_id?: string;
+  fuelStation?: string;
 }
 
 export interface User {
@@ -58,7 +60,17 @@ export interface User {
   secretariatId?: string;
 }
 
-export type Page = 'DASHBOARD' | 'SECRETARIATS' | 'VEHICLES' | 'SUPPLY_ENTRY' | 'REPORTS' | 'SETTINGS' | 'TRANSACTIONS';
+export interface FuelStation {
+  id: string;
+  name: string;
+  address: string;
+  secretariat_ids: string[];
+  status: 'ACTIVE' | 'INACTIVE';
+  phone?: string;
+  created_at?: string;
+}
+
+export type Page = 'DASHBOARD' | 'SECRETARIATS' | 'VEHICLES' | 'SUPPLY_ENTRY' | 'REPORTS' | 'SETTINGS' | 'TRANSACTIONS' | 'FUEL_STATION';
 
 export interface BalanceRequest {
   id: string;
